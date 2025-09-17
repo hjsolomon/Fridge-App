@@ -1,19 +1,17 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, Button, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../Navigation/AppNavigator';
 import BottomNav  from '../components/BottomNavigation'
 
-type Props = NativeStackScreenProps<RootStackParamList, 'Bluetooth'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'Home'>;
 
-const BluetoothScreen: React.FC<Props> = ({ navigation }) => {
+const HomeScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Bluetooth Connection</Text>
-      <Text style={styles.subtitle}>
-        Connect to your vaccine fridge to start monitoring.
-      </Text>
-      <BottomNav />
+      <Text style={styles.title}>Home</Text>
+            <BottomNav />
+      
     </View>
   );
 };
@@ -24,4 +22,4 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 16, textAlign: 'center', marginBottom: 24 },
 });
 
-export default BluetoothScreen;
+export default HomeScreen;

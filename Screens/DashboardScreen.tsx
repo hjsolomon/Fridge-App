@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, Button, StyleSheet } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../Navigation/AppNavigator';
+import BottomNav  from '../components/BottomNavigation'
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
@@ -9,6 +10,8 @@ const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Dashboard</Text>
+            <BottomNav />
+      
     </View>
   );
 };
