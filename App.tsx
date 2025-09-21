@@ -4,8 +4,6 @@ import { GluestackUIProvider } from '@gluestack-ui/themed';
 import { config } from '@gluestack-ui/config/src/gluestack-ui.config.ts';
 
 
-import '@/global.css';
-
 const App = () => {
   return(<GluestackUIProvider config={config}>
   <AppNavigator />

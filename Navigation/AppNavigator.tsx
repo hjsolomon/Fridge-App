@@ -1,40 +1,41 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
+import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import BluetoothScreen from '../Screens/BluetoothScreen';
 import DashboardScreen from '../Screens/DashboardScreen';
 import HomeScreen from '../Screens/HomeScreen';
+import BottomNav from '../components/BottomNavigation';
 
-export type RootStackParamList = {
+export type RootTabParamList = {
   Bluetooth: undefined;
   Dashboard: undefined;
-  Home: undefined
+  Home: undefined;
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const navTheme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    background: '#1C1C1C',
+    text: '#FFFFFF',
+  },
+};
+
+const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const AppNavigator = () => {
   return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Bluetooth">
-        <Stack.Screen
-          name="Bluetooth"
-          component={BluetoothScreen}
-          options={{ title: 'Connect Fridge' }}
-        />
-        <Stack.Screen
-          name="Dashboard"
-          component={DashboardScreen}
-          options={{ title: 'Fridge Dashboard' }}
-        />
-        <Stack.Screen
-          name="Home"
-          component={HomeScreen}
-          options={{ title: 'Home Screen' }}
-        />
-      </Stack.Navigator>
+    <NavigationContainer theme={navTheme}>
+      <Tab.Navigator
+        initialRouteName="Bluetooth"
+        screenOptions={{ headerShown: false }}
+        tabBar={(props) => <BottomNav {...props} />}
+      >
+        <Tab.Screen name="Bluetooth" component={BluetoothScreen} />
+        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Dashboard" component={DashboardScreen} />
+      </Tab.Navigator>
     </NavigationContainer>
   );
 };

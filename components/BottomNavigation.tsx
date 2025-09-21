@@ -1,49 +1,57 @@
 import React from 'react';
-import { HStack, Button, ButtonIcon } from '@gluestack-ui/themed';
+import { View } from 'react-native';
+import { Button, ButtonIcon } from '@gluestack-ui/themed';
 import { Home, Bluetooth, ChartSpline } from 'lucide-react-native';
-import { useNavigation, NavigationProp } from '@react-navigation/native';
-import { RootStackParamList } from '../Navigation/AppNavigator';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-export default function BottomNav() {
-  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+export default function BottomNav({ state, navigation }: BottomTabBarProps) {
+  const icons: Record<string, any> = {
+    Bluetooth: Bluetooth,
+    Home: Home,
+    Dashboard: ChartSpline,
+  };
 
   return (
-    <HStack
-      justifyContent="space-around"
-      alignItems="center"
-      bg="$backgroundLight50"
-      px="$4"
-      py="$2"
-      borderTopWidth={1}
-      borderColor="$backgroundLight200"
-      position="absolute"
-      bottom={0}
-      left={0}
-      right={0}
-      >
-        {/* Bluetooth */}
-      <Button
-        variant="link"
-        onPress={() => navigation.navigate('Bluetooth')}
-      >
-        <ButtonIcon as={Bluetooth} size="xl" color="$primary500" />
-      </Button>
-      {/* Home */}
-      <Button
-        variant="link"
-        onPress={() => navigation.navigate('Home')}
-      >
-        <ButtonIcon as={Home} size="xl" color="$primary500" />
-      </Button>
-    {/* Dashboard */}
-      <Button
-        variant="link"
-        onPress={() => navigation.navigate('Dashboard')}
-      >
-        <ButtonIcon as={ChartSpline} size="xl" color="$primary500" />
-      </Button>
+    <View
+      style={{
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: '#3A3A3A',
+        paddingHorizontal: 40,
+        paddingVertical: 12,
+        marginHorizontal: 16,
+        borderTopWidth: 1,
+        borderRadius: 50,
+        position: 'absolute',
+        bottom: 24,
+        left: 0,
+        right: 0,
+      }}
+    >
+      {state.routes.map((route, index) => {
+        const isFocused = state.index === index;
+        const Icon = icons[route.name];
 
-
-    </HStack>
+        return (
+          <Button
+            key={route.key}
+            w={64}
+            h={64}
+            borderRadius="$full"
+            justifyContent="center"
+            alignItems="center"
+            bg={isFocused ? '#3a783eff' : 'transparent'}
+            onPress={() => {
+              if (!isFocused) {
+                navigation.navigate(route.name);
+              }
+            }}
+          >
+            <ButtonIcon as={Icon} size="xl" color="#FFFFFF" />
+          </Button>
+        );
+      })}
+    </View>
   );
 }
