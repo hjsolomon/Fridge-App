@@ -1,6 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
-import { Button, ButtonIcon } from '@gluestack-ui/themed';
+import { View, Button, ButtonIcon } from '@gluestack-ui/themed';
 import { Home, Bluetooth, ChartSpline } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
@@ -12,22 +11,20 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   };
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        backgroundColor: '#3A3A3A',
-        paddingHorizontal: 40,
-        paddingVertical: 12,
-        marginHorizontal: 16,
-        borderTopWidth: 1,
-        borderRadius: 50,
-        position: 'absolute',
-        bottom: 24,
-        left: 0,
-        right: 0,
-      }}
+ <View
+      flexDirection="row"
+      justifyContent="space-between"
+      alignItems="center"
+      bg="#3A3A3A"
+      px="$10"      
+      py="$3"       
+      mx="$4"       
+      borderTopWidth={1}
+      borderRadius="$full"
+      position="absolute"
+      bottom="$6"   
+      left={0}
+      right={0}
     >
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;

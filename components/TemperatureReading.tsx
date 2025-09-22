@@ -1,4 +1,3 @@
-// src/components/TemperatureCircle.tsx
 import React from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 
@@ -22,7 +21,7 @@ export const TemperatureCircle = ({ temperature }: TemperatureCircleProps) => {
       width={250}
       height={250}
     >
-      <Text fontSize={'$8xl'} fontWeight="$normal" color="white">
+      <Text fontSize={'$7xl'} fontWeight="$normal" color="white">
         {temperature}°C
       </Text>
     </Box>
