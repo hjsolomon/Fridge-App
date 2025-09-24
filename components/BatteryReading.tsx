@@ -11,7 +11,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
   };
 
   return (
-    <Box alignItems="center" justifyContent="center" bg="$#1C1C1C" my="$5">
+    <Box alignItems="center" justifyContent="center" bg="$#1C1C1C" my="$5" >
       <HStack alignItems="center">
       <HStack
         w="$80"
@@ -22,6 +22,13 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
         overflow="hidden"
         alignItems="center"
         bg = "#1C1C1C"
+              style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      }}
       >
         <Box
             mx = "$2"

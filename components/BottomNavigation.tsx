@@ -1,6 +1,12 @@
 import React from 'react';
 import { View, Button, ButtonIcon } from '@gluestack-ui/themed';
-import { Home, Bluetooth, ChartSpline, Syringe, Settings } from 'lucide-react-native';
+import {
+  Home,
+  Bluetooth,
+  ChartSpline,
+  Syringe,
+  Settings,
+} from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 export default function BottomNav({ state, navigation }: BottomTabBarProps) {
@@ -13,20 +19,27 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   };
 
   return (
- <View
+    <View
       flexDirection="row"
       justifyContent="space-between"
       alignItems="center"
       bg="#3A3A3A"
-      px="$3"      
-      py="$3"       
-      mx="$2"       
+      px="$3"
+      py="$3"
+      mx="$2"
       borderTopWidth={1}
       borderRadius="$full"
       position="absolute"
-      bottom="$6"   
+      bottom="$6"
       left={0}
       right={0}
+      style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+      }}
     >
       {state.routes.map((route, index) => {
         const isFocused = state.index === index;
@@ -40,6 +53,17 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
             borderRadius="$full"
             justifyContent="center"
             alignItems="center"
+            style={
+              isFocused
+                ? {
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.3,
+                    shadowRadius: 4,
+                    elevation: 4,
+                  }
+                : undefined
+            }
             bg={isFocused ? '#3a783eff' : 'transparent'}
             onPress={() => {
               if (!isFocused) {
