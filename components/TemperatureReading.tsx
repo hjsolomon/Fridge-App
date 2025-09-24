@@ -27,3 +27,6 @@ export const TemperatureCircle = ({ temperature }: TemperatureCircleProps) => {
     </Box>
   );
 };
+
+export default TemperatureCircle;
+
