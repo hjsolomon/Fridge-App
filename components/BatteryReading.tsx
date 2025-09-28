@@ -25,7 +25,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
               style={{
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.25,
+        shadowOpacity: 0.5,
         shadowRadius: 4,
         elevation: 5,
       }}

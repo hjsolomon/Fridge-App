@@ -21,6 +21,7 @@ export const TemperatureCircle = ({ temperature }: TemperatureCircleProps) => {
       width={250}
       height={250}
       
+      
     >
       <Text fontSize={'$7xl'} fontWeight="$normal" color="white">
         {temperature}°C

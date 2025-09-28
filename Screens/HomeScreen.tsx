@@ -40,7 +40,7 @@ const HomeScreen: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
   return (
-    <Box flex={1} bg="#1C1C1C" p="$4">
+    <Box flex={1} bg="#1c1c1c" p="$4">
       <ScreenHeader title="Home" />
       <Box alignItems="center" mt="$1" mb="$5">
         <TemperatureCircle temperature={temp} />
