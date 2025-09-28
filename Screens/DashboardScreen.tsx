@@ -12,7 +12,13 @@ const DashboardScreen: React.FC = () => {
 
     <TempGraph onUpdateTime={setTimeSinceUpdate} />
 
-        <Box alignItems="center" justifyContent="center" bg="#282828ff" pt="$3" my="$3" rounded="$2xl">
+        <Box alignItems="center" justifyContent="center" bg="#282828ff" pt="$3" my="$3" rounded="$2xl"               style={{
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 20,
+      }}>
             <Text color="white" fontSize="$2xl" fontWeight="$normal" pb="$2">
                 Time Since Last Update
             </Text>

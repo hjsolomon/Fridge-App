@@ -23,7 +23,7 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({ icon, label, bgColor, acti
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
         shadowRadius: 4,
-        elevation: 5,
+        elevation: 20,
       }}
       >
         {icon}
