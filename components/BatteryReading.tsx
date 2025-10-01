@@ -11,7 +11,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
   };
 
   return (
-    <Box alignItems="center" justifyContent="center" bg="$#1C1C1C" my="$5" >
+    <Box alignItems="center" justifyContent="center" bg="$#1C1C1C" mt="$3" >
       <HStack alignItems="center">
       <HStack
         w="$80"

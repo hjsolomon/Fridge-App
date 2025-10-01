@@ -8,6 +8,7 @@ import {
   Settings,
 } from 'lucide-react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { MotiView } from 'moti';
 
 export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   const icons: Record<string, any> = {
@@ -61,6 +62,7 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
                     shadowOpacity: 0.3,
                     shadowRadius: 4,
                     elevation: 10,
+                    zIndex: 1,
                   }
                 : undefined
             }
@@ -71,7 +73,20 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
               }
             }}
           >
-            <ButtonIcon as={Icon} size="2xl" color="#FFFFFF" />
+            <MotiView
+              from={{ scale: 1, opacity: 0.6 }}
+              animate={{
+                scale: isFocused ? 1.2 : 1,
+                opacity: isFocused ? 1 : 0.6,
+              }}
+              transition={{ type: 'timing', duration: 250 }}
+            >
+              <ButtonIcon
+                as={Icon}
+                size="2xl"
+                color={isFocused ? "#FFFFFF" : "#cdcdcdff"}
+              />
+            </MotiView>
           </Button>
         );
       })}

@@ -33,7 +33,10 @@ const AppNavigator = () => {
     <NavigationContainer theme={navTheme}>
       <Tab.Navigator
         initialRouteName="Bluetooth"
-        screenOptions={{ headerShown: false }}
+        screenOptions={{ headerShown: false,
+          animation: 'shift'
+          
+        }}
         tabBar={(props) => <BottomNav {...props} />}
       >
         <Tab.Screen name="Bluetooth" component={BluetoothScreen} />
