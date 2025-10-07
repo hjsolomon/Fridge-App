@@ -72,7 +72,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
 
       <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
         <ModalBackdrop />
-        <ModalContent bg="#282828">
+        <ModalContent bg="#282828" width="80%">
           <ModalHeader>
             <Text color="white" fontSize="$xl" fontWeight="$bold">
               Update Inventory
