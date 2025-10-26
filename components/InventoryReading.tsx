@@ -27,7 +27,7 @@ export const InventoryReading = ({ inventory }: InventoryReadingProps) => {
             <Text color="white" fontSize="$2xl" fontWeight="$normal">
               Current Inventory
             </Text>
-            <Text color="white" fontSize="$6xl" fontWeight="$bold" pb="$1">
+            <Text color="white" fontSize="$6xl" fontWeight="$bold" >
               {inventory}
             </Text>
           </Box>

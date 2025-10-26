@@ -41,7 +41,9 @@ const HomeScreen: React.FC = () => {
   }, []);
   return (
     <Box flex={1} bg="#1c1c1c" p="$4">
-      <ScreenHeader title="Home" />
+      <ScreenHeader title="Home" 
+      infoText="The Home screen provides a quick overview of the refrigerator's current status. Here you can view temperature readings, power source information, and battery levels at a glance."
+      />
       <Box alignItems="center" mt="$1" mb="$7">
         <TemperatureCircle temperature={temp} />
       </Box>

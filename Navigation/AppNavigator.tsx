@@ -8,6 +8,8 @@ import InventoryScreen from '../Screens/InventoryScreen';
 import SettingsScreen from '@/Screens/SettingsScreen';
 import HomeScreen from '../Screens/HomeScreen';
 import BottomNav from '../components/BottomNavigation';
+import Toast from 'react-native-toast-message';
+
 
 export type RootTabParamList = {
   Bluetooth: undefined;
@@ -30,6 +32,7 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 
 const AppNavigator = () => {
   return (
+    <>
     <NavigationContainer theme={navTheme}>
       <Tab.Navigator
         initialRouteName="Bluetooth"
@@ -48,6 +51,8 @@ const AppNavigator = () => {
 
       </Tab.Navigator>
     </NavigationContainer>
+    <Toast />
+    </>
   );
 };
 

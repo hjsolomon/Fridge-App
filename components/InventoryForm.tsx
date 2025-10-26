@@ -24,6 +24,8 @@ import {
   SelectItem,
 } from '@gluestack-ui/themed';
 import { ChevronDown } from 'lucide-react-native';
+import { Alert } from 'react-native';
+
 
 interface InventoryFormProps {
   onSubmit: (
@@ -40,7 +42,15 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
   const [lotNumber, setLotNumber] = useState('');
 
   const handleSubmit = () => {
-    if (!action || !count) return;
+    if (!action) {
+      Alert.alert('Validation Error', 'Please select Add or Remove.');
+      return;
+    }
+    if (!count || isNaN(Number(count)) || Number(count) <= 0) {
+      Alert.alert('Validation Error', 'Please enter a valid number.');
+      return;
+    }
+
     onSubmit(action, parseInt(count, 10), lotNumber);
     setShowModal(false);
     setCount('');
@@ -52,7 +62,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
     <>
       <Button
         bg="#3a783e"
-        rounded="$2xl" 
+        rounded="$3xl"
         alignSelf="center"
         justifyContent="center"
         alignItems="center"
@@ -60,12 +70,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
         style={{
           paddingVertical: 16,
           paddingHorizontal: 36,
-          height: '10%',
+          height: '7%',
           width: '100%',
         }}
         onPress={() => setShowModal(true)}
       >
-        <ButtonText size="3xl" fontWeight="$normal" color="white">
+        <ButtonText size="2xl" fontWeight="$normal" color="white">
           Add / Remove Vials
         </ButtonText>
       </Button>
@@ -122,16 +132,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
           </ModalBody>
 
           <ModalFooter>
-            <Button
-              bg={action === 'Add' ? '#3a783e' : '#D34949'}
-              onPress={handleSubmit}
-              mr="$2"
-            >
+            <Button bg={'#3a783e'} onPress={handleSubmit} mr="$2">
               <ButtonText color="white">Submit</ButtonText>
             </Button>
             <Button
               variant="outline"
-              borderColor={action === 'Add' ? '#3a783e' : '#D34949'}
+              borderColor={'#3a783e'}
               onPress={() => setShowModal(false)}
             >
               <ButtonText color="#FFFFFF">Cancel</ButtonText>
