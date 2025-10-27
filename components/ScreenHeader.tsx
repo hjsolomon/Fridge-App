@@ -1,13 +1,29 @@
 import React, { useState } from 'react';
-import { Box, Text, Icon, Button, ButtonIcon, Modal, ModalBackdrop, ModalContent, ModalHeader, ModalBody, ModalCloseButton } from '@gluestack-ui/themed';
+import {
+  Box,
+  Text,
+  Icon,
+  Button,
+  ButtonIcon,
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+} from '@gluestack-ui/themed';
 import { CircleHelp } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 
 interface ScreenHeaderProps {
   title: string;
   infoText?: string;
 }
 
-export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, infoText }) => {
+export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
+  title,
+  infoText,
+}) => {
   const [showInfo, setShowInfo] = useState(false);
 
   return (
@@ -34,7 +50,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, infoText }) =
         </Button>
       </Box>
 
-      <Box mt="$1" height={1} width="100%" bg="#FFFFFF" mb="$5"opacity={0.3} />
+      <Box mt="$1" height={1} width="100%" bg="#FFFFFF" mb="$5" opacity={0.3} />
 
       <Modal isOpen={showInfo} onClose={() => setShowInfo(false)}>
         <ModalBackdrop />
@@ -43,7 +59,14 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, infoText }) =
             <Text color="white" fontSize="$xl" fontWeight="$bold">
               {title} — Info
             </Text>
-            <ModalCloseButton />
+            <ModalCloseButton
+              position="absolute"
+              top="$3"
+              right="$3"
+              onPress={() => setShowInfo(false)}
+            >
+              <Icon as={X} color="white" size="xl" />
+            </ModalCloseButton>{' '}
           </ModalHeader>
 
           <ModalBody>
@@ -53,7 +76,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({ title, infoText }) =
             </Text>
 
             <Text color="white" fontSize="$sm" mt="$3" fontStyle="italic">
-              Tap anywhere outside of this popup to dismiss.
+              Tap the 'X' or anywhere outside of this popup to dismiss.
             </Text>
           </ModalBody>
         </ModalContent>
