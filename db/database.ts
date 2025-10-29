@@ -2,6 +2,25 @@ import SQLite from 'react-native-sqlite-storage';
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
 
+/**
+ * Database Module
+ * ----------------
+ * Provides local persistence and synchronization support for fridge,
+ * sensor, and inventory data using SQLite on React Native.
+ *
+ * Tables:
+ *  - fridges
+ *  - sensor_readings
+ *  - inventory
+ *  - inventory_log
+ *
+ * Includes automatic update triggers and helper functions for CRUD operations.
+ */
+
+/* -------------------------------------------------------------------------- */
+/*                                Data Models                                 */
+/* -------------------------------------------------------------------------- */
+
 export interface Fridge {
   fridge_id: string;
   name?: string;
@@ -34,8 +53,18 @@ export interface InventoryLog {
   synced?: number;
 }
 
+/* -------------------------------------------------------------------------- */
+/*                           Database Initialization                           */
+/* -------------------------------------------------------------------------- */
+
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
+/**
+ * getDB()
+ * --------
+ * Opens or returns an existing SQLite database instance.
+ * Ensures foreign key support is enabled.
+ */
 export const getDB = async () => {
   if (dbInstance) return dbInstance;
   try {
@@ -43,11 +72,14 @@ export const getDB = async () => {
       name: 'fridge.db',
       location: 'default',
     });
+
+    // Enforce relational integrity
     try {
       await dbInstance.executeSql('PRAGMA foreign_keys = ON;');
     } catch (pragmaErr) {
       console.warn('Failed to set PRAGMA foreign_keys:', pragmaErr);
     }
+
     return dbInstance;
   } catch (err) {
     console.error('Failed to open DB:', err);
@@ -55,22 +87,47 @@ export const getDB = async () => {
   }
 };
 
+/**
+ * executeSql()
+ * -------------
+ * A safe wrapper around `db.executeSql()` with error handling.
+ *
+ * @param sql - SQL statement
+ * @param params - optional parameters for the query
+ * @returns first SQL result set
+ */
 export const executeSql = async (sql: string, params: any[] = []): Promise<any> => {
   const db = await getDB();
   try {
     const result = await db.executeSql(sql, params);
-
-    if (Array.isArray(result)) {
-      return result[0];
-    }
-    return result;
+    return Array.isArray(result) ? result[0] : result;
   } catch (err) {
     console.error('SQL error:', sql, params, err);
     throw err;
   }
 };
 
+/* -------------------------------------------------------------------------- */
+/*                                 Table Setup                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * createTables()
+ * ---------------
+ * Creates all required tables and triggers if they do not already exist.
+ *
+ * Tables:
+ *  - fridges
+ *  - sensor_readings
+ *  - inventory
+ *  - inventory_log
+ *
+ * Triggers:
+ *  - update_inventory_after_log
+ *  - update_battery_level_after_reading
+ */
 export const createTables = async () => {
+  // Stores basic fridge metadata
   await executeSql(`
     CREATE TABLE IF NOT EXISTS fridges (
       fridge_id TEXT PRIMARY KEY NOT NULL,
@@ -81,6 +138,7 @@ export const createTables = async () => {
     );
   `);
 
+  // Stores sensor readings per fridge
   await executeSql(`
     CREATE TABLE IF NOT EXISTS sensor_readings (
       reading_id TEXT PRIMARY KEY NOT NULL,
@@ -93,6 +151,7 @@ export const createTables = async () => {
     );
   `);
 
+  // Tracks current inventory count per fridge
   await executeSql(`
     CREATE TABLE IF NOT EXISTS inventory (
       fridge_id TEXT PRIMARY KEY NOT NULL,
@@ -102,6 +161,7 @@ export const createTables = async () => {
     );
   `);
 
+  // Logs inventory changes with timestamps
   await executeSql(`
     CREATE TABLE IF NOT EXISTS inventory_log (
       log_id TEXT PRIMARY KEY NOT NULL,
@@ -114,6 +174,7 @@ export const createTables = async () => {
     );
   `);
 
+  // Automatically updates inventory after a log entry
   await executeSql(`
     CREATE TRIGGER IF NOT EXISTS update_inventory_after_log
     AFTER INSERT ON inventory_log
@@ -128,6 +189,7 @@ export const createTables = async () => {
     END;
   `);
 
+  // Keeps fridge battery level in sync with latest reading
   await executeSql(`
     CREATE TRIGGER IF NOT EXISTS update_battery_level_after_reading
     AFTER INSERT ON sensor_readings
@@ -139,14 +201,22 @@ export const createTables = async () => {
   `);
 };
 
+/* -------------------------------------------------------------------------- */
+/*                               Maintenance Ops                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * resetDatabase()
+ * ----------------
+ * Drops all tables and clears the database.
+ * Useful for development or factory reset operations.
+ */
 export const resetDatabase = async () => {
   try {
     await executeSql(`DROP TABLE IF EXISTS inventory_log;`);
     await executeSql(`DROP TABLE IF EXISTS inventory;`);
     await executeSql(`DROP TABLE IF EXISTS sensor_readings;`);
     await executeSql(`DROP TABLE IF EXISTS fridges;`);
-
-
     console.log('Database reset complete');
   } catch (err) {
     console.error('Failed to reset DB:', err);
@@ -154,6 +224,15 @@ export const resetDatabase = async () => {
   }
 };
 
+/* -------------------------------------------------------------------------- */
+/*                              Fridge Functions                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * insertFridge()
+ * ---------------
+ * Inserts or replaces a fridge record.
+ */
 export const insertFridge = async (fridge: Fridge) => {
   const { fridge_id, name, status, last_sync, battery_level } = fridge;
   try {
@@ -167,6 +246,11 @@ export const insertFridge = async (fridge: Fridge) => {
   }
 };
 
+/**
+ * getAllFridges()
+ * ----------------
+ * Retrieves all fridge records.
+ */
 export const getAllFridges = async (): Promise<Fridge[]> => {
   try {
     const result = await executeSql(`SELECT * FROM fridges;`);
@@ -177,6 +261,11 @@ export const getAllFridges = async (): Promise<Fridge[]> => {
   }
 };
 
+/**
+ * updateFridgeStatus()
+ * ---------------------
+ * Updates the operational status of a specific fridge.
+ */
 export const updateFridgeStatus = async (fridge_id: string, status: string) => {
   try {
     await executeSql(`UPDATE fridges SET status = ? WHERE fridge_id = ?;`, [status, fridge_id]);
@@ -185,17 +274,19 @@ export const updateFridgeStatus = async (fridge_id: string, status: string) => {
   }
 };
 
-export const insertSensorReading = async (reading: SensorReading) => {
-  const {
-    reading_id,
-    fridge_id,
-    temperature,
-    timestamp,
-    synced = 0,
-    battery_level = 0, 
-  } = reading;
+/* -------------------------------------------------------------------------- */
+/*                            Sensor Reading Logic                            */
+/* -------------------------------------------------------------------------- */
 
-try {
+/**
+ * insertSensorReading()
+ * ----------------------
+ * Records a new temperature and battery reading for a fridge.
+ */
+export const insertSensorReading = async (reading: SensorReading) => {
+  const { reading_id, fridge_id, temperature, timestamp, synced = 0, battery_level = 0 } = reading;
+
+  try {
     await executeSql(
       `INSERT OR REPLACE INTO sensor_readings
        (reading_id, fridge_id, temperature, timestamp, synced, battery_level)
@@ -208,6 +299,11 @@ try {
   }
 };
 
+/**
+ * getUnsyncedReadings()
+ * ----------------------
+ * Retrieves sensor readings that have not yet been synced to the server.
+ */
 export const getUnsyncedReadings = async (): Promise<SensorReading[]> => {
   try {
     const result = await executeSql(`SELECT * FROM sensor_readings WHERE synced = 0;`);
@@ -218,6 +314,11 @@ export const getUnsyncedReadings = async (): Promise<SensorReading[]> => {
   }
 };
 
+/**
+ * markReadingsAsSynced()
+ * -----------------------
+ * Marks multiple sensor readings as successfully synced.
+ */
 export const markReadingsAsSynced = async (readingIds: string[]) => {
   if (!readingIds.length) return;
   const placeholders = readingIds.map(() => '?').join(',');
@@ -231,23 +332,35 @@ export const markReadingsAsSynced = async (readingIds: string[]) => {
   }
 };
 
-export const getLatestSensorReading = async (fridge_id: string): Promise<SensorReading | null> => {
+/**
+ * getLatestSensorReading()
+ * -------------------------
+ * Retrieves the most recent reading for a given fridge.
+ */
+export const getLatestSensorReading = async (
+  fridge_id: string
+): Promise<SensorReading | null> => {
   try {
     const result = await executeSql(
       `SELECT * FROM sensor_readings WHERE fridge_id = ? ORDER BY timestamp DESC LIMIT 1;`,
       [fridge_id]
     );
-    if (result.rows.length > 0) {
-      return result.rows.item(0) as SensorReading;
-    } else {
-      return null;
-    }
+    return result.rows.length > 0 ? (result.rows.item(0) as SensorReading) : null;
   } catch (err) {
     console.error('Failed to get latest sensor reading:', err);
     return null;
   }
 };
 
+/* -------------------------------------------------------------------------- */
+/*                            Inventory Management                            */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * getInventory()
+ * ---------------
+ * Fetches the current inventory state for all fridges.
+ */
 export const getInventory = async (): Promise<Inventory[]> => {
   try {
     const result = await executeSql(`SELECT * FROM inventory;`);
@@ -259,6 +372,12 @@ export const getInventory = async (): Promise<Inventory[]> => {
   }
 };
 
+/**
+ * logInventoryAction()
+ * ---------------------
+ * Records a stock addition or removal in the log.
+ * Automatically triggers inventory count updates.
+ */
 export const logInventoryAction = async (log: InventoryLog) => {
   const { log_id, fridge_id, action, count, synced = 0 } = log;
   try {
@@ -274,6 +393,11 @@ export const logInventoryAction = async (log: InventoryLog) => {
   }
 };
 
+/**
+ * getInventoryLogs()
+ * -------------------
+ * Retrieves the full action history for a given fridge.
+ */
 export const getInventoryLogs = async (fridge_id: string): Promise<InventoryLog[]> => {
   try {
     const result = await executeSql(
@@ -288,16 +412,30 @@ export const getInventoryLogs = async (fridge_id: string): Promise<InventoryLog[
   }
 };
 
+/* -------------------------------------------------------------------------- */
+/*                              Initialization Seed                           */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * insertInitialFridge()
+ * ----------------------
+ * Inserts a default fridge and inventory entry if they do not exist.
+ * Useful for first-time app initialization.
+ */
 export const insertInitialFridge = async () => {
   try {
     await executeSql(
-      `INSERT OR IGNORE INTO fridges (fridge_id, name, status, last_sync, battery_level) VALUES (?, ?, ?, ?, ?);`,
+      `INSERT OR IGNORE INTO fridges (fridge_id, name, status, last_sync, battery_level)
+       VALUES (?, ?, ?, ?, ?);`,
       ['fridge_1', 'Primary Fridge', 'ok', new Date().toISOString(), 100]
     );
+
     await executeSql(
-      `INSERT OR IGNORE INTO inventory (fridge_id, current_count) VALUES (?, ?);`,
+      `INSERT OR IGNORE INTO inventory (fridge_id, current_count)
+       VALUES (?, ?);`,
       ['fridge_1', 0]
     );
+
     console.log('Inserted initial fridge / inventory');
   } catch (err) {
     console.error('Failed to insert initial fridge:', err);
