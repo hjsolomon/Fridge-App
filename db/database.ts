@@ -1,4 +1,6 @@
 import SQLite from 'react-native-sqlite-storage';
+SQLite.DEBUG(true);
+SQLite.enablePromise(true);
 
 export interface Fridge {
   fridge_id: string;
@@ -14,6 +16,7 @@ export interface SensorReading {
   temperature: number;
   timestamp: string;
   synced?: number;
+  battery_level: number;
 }
 
 export interface Inventory {
@@ -27,32 +30,44 @@ export interface InventoryLog {
   fridge_id: string;
   action: 'add' | 'remove';
   count: number;
-  timestamp?: string;
+  timestamp: string;
   synced?: number;
 }
 
 let dbInstance: SQLite.SQLiteDatabase | null = null;
 
 export const getDB = async () => {
-  if (!dbInstance) {
-    dbInstance = await SQLite.openDatabase({ name: 'fridge.db', location: 'default' });
-    await executeSql('PRAGMA foreign_keys = ON;');
+  if (dbInstance) return dbInstance;
+  try {
+    dbInstance = await SQLite.openDatabase({
+      name: 'fridge.db',
+      location: 'default',
+    });
+    try {
+      await dbInstance.executeSql('PRAGMA foreign_keys = ON;');
+    } catch (pragmaErr) {
+      console.warn('Failed to set PRAGMA foreign_keys:', pragmaErr);
+    }
+    return dbInstance;
+  } catch (err) {
+    console.error('Failed to open DB:', err);
+    throw err;
   }
-  return dbInstance;
 };
 
-export const executeSql = async (sql: string, params: any[] = []): Promise<SQLite.ResultSet[]> => {
+export const executeSql = async (sql: string, params: any[] = []): Promise<any> => {
   const db = await getDB();
-  return new Promise((resolve, reject) => {
-    db.transaction(tx => {
-      tx.executeSql(
-        sql,
-        params,
-        (_, result) => resolve([result]),
-        (_, error) => { reject(error); return false; }
-      );
-    });
-  });
+  try {
+    const result = await db.executeSql(sql, params);
+
+    if (Array.isArray(result)) {
+      return result[0];
+    }
+    return result;
+  } catch (err) {
+    console.error('SQL error:', sql, params, err);
+    throw err;
+  }
 };
 
 export const createTables = async () => {
@@ -62,7 +77,7 @@ export const createTables = async () => {
       name TEXT,
       status TEXT,
       last_sync TEXT,
-      battery_level REAL
+      battery_level INTEGER
     );
   `);
 
@@ -73,6 +88,7 @@ export const createTables = async () => {
       temperature REAL,
       timestamp TEXT DEFAULT (datetime('now')),
       synced INTEGER DEFAULT 0,
+      battery_level INTEGER,
       FOREIGN KEY (fridge_id) REFERENCES fridges(fridge_id)
     );
   `);
@@ -111,6 +127,31 @@ export const createTables = async () => {
       WHERE fridge_id = NEW.fridge_id;
     END;
   `);
+
+  await executeSql(`
+    CREATE TRIGGER IF NOT EXISTS update_battery_level_after_reading
+    AFTER INSERT ON sensor_readings
+    BEGIN
+      UPDATE fridges
+      SET battery_level = NEW.battery_level
+      WHERE fridge_id = NEW.fridge_id;
+    END;
+  `);
+};
+
+export const resetDatabase = async () => {
+  try {
+    await executeSql(`DROP TABLE IF EXISTS inventory_log;`);
+    await executeSql(`DROP TABLE IF EXISTS inventory;`);
+    await executeSql(`DROP TABLE IF EXISTS sensor_readings;`);
+    await executeSql(`DROP TABLE IF EXISTS fridges;`);
+
+
+    console.log('Database reset complete');
+  } catch (err) {
+    console.error('Failed to reset DB:', err);
+    throw err;
+  }
 };
 
 export const insertFridge = async (fridge: Fridge) => {
@@ -128,7 +169,7 @@ export const insertFridge = async (fridge: Fridge) => {
 
 export const getAllFridges = async (): Promise<Fridge[]> => {
   try {
-    const [result] = await executeSql(`SELECT * FROM fridges;`);
+    const result = await executeSql(`SELECT * FROM fridges;`);
     return result.rows.raw() as Fridge[];
   } catch (err) {
     console.error('Failed to get fridges:', err);
@@ -145,21 +186,31 @@ export const updateFridgeStatus = async (fridge_id: string, status: string) => {
 };
 
 export const insertSensorReading = async (reading: SensorReading) => {
-  const { reading_id, fridge_id, temperature, timestamp, synced = 0 } = reading;
-  try {
+  const {
+    reading_id,
+    fridge_id,
+    temperature,
+    timestamp,
+    synced = 0,
+    battery_level = 0, 
+  } = reading;
+
+try {
     await executeSql(
-      `INSERT OR REPLACE INTO sensor_readings (reading_id, fridge_id, temperature, timestamp, synced)
-       VALUES (?, ?, ?, ?, ?);`,
-      [reading_id, fridge_id, temperature, timestamp, synced]
+      `INSERT OR REPLACE INTO sensor_readings
+       (reading_id, fridge_id, temperature, timestamp, synced, battery_level)
+       VALUES (?, ?, ?, ?, ?, ?);`,
+      [reading_id, fridge_id, temperature, timestamp, synced, battery_level]
     );
   } catch (err) {
     console.error('Failed to insert sensor reading:', err);
+    throw err;
   }
 };
 
 export const getUnsyncedReadings = async (): Promise<SensorReading[]> => {
   try {
-    const [result] = await executeSql(`SELECT * FROM sensor_readings WHERE synced = 0;`);
+    const result = await executeSql(`SELECT * FROM sensor_readings WHERE synced = 0;`);
     return result.rows.raw() as SensorReading[];
   } catch (err) {
     console.error('Failed to get unsynced readings:', err);
@@ -180,9 +231,26 @@ export const markReadingsAsSynced = async (readingIds: string[]) => {
   }
 };
 
+export const getLatestSensorReading = async (fridge_id: string): Promise<SensorReading | null> => {
+  try {
+    const result = await executeSql(
+      `SELECT * FROM sensor_readings WHERE fridge_id = ? ORDER BY timestamp DESC LIMIT 1;`,
+      [fridge_id]
+    );
+    if (result.rows.length > 0) {
+      return result.rows.item(0) as SensorReading;
+    } else {
+      return null;
+    }
+  } catch (err) {
+    console.error('Failed to get latest sensor reading:', err);
+    return null;
+  }
+};
+
 export const getInventory = async (): Promise<Inventory[]> => {
   try {
-    const [result] = await executeSql(`SELECT * FROM inventory;`);
+    const result = await executeSql(`SELECT * FROM inventory;`);
     console.log('Fetched inventory successfully');
     return result.rows.raw() as Inventory[];
   } catch (err) {
@@ -202,12 +270,13 @@ export const logInventoryAction = async (log: InventoryLog) => {
     console.log('Logged inventory action successfully');
   } catch (err) {
     console.error('Failed to log inventory action:', err);
+    throw err;
   }
 };
 
 export const getInventoryLogs = async (fridge_id: string): Promise<InventoryLog[]> => {
   try {
-    const [result] = await executeSql(
+    const result = await executeSql(
       `SELECT * FROM inventory_log WHERE fridge_id = ? ORDER BY timestamp DESC;`,
       [fridge_id]
     );
@@ -220,17 +289,18 @@ export const getInventoryLogs = async (fridge_id: string): Promise<InventoryLog[
 };
 
 export const insertInitialFridge = async () => {
-  const fridges = await getAllFridges();
-  if (fridges.length === 0) {
-    await insertFridge({
-      fridge_id: 'fridge_1',
-      name: 'Main Fridge',
-      status: 'online',
-      battery_level: 100,
-      last_sync: new Date().toISOString(),
-    });
-    console.log('Inserted initial fridge');
-  } else {
-    console.log('Fridge already exists, skipping initial insert');
+  try {
+    await executeSql(
+      `INSERT OR IGNORE INTO fridges (fridge_id, name, status, last_sync, battery_level) VALUES (?, ?, ?, ?, ?);`,
+      ['fridge_1', 'Primary Fridge', 'ok', new Date().toISOString(), 100]
+    );
+    await executeSql(
+      `INSERT OR IGNORE INTO inventory (fridge_id, current_count) VALUES (?, ?);`,
+      ['fridge_1', 0]
+    );
+    console.log('Inserted initial fridge / inventory');
+  } catch (err) {
+    console.error('Failed to insert initial fridge:', err);
+    throw err;
   }
 };

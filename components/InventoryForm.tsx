@@ -40,14 +40,16 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
   const [action, setAction] = useState<'Add' | 'Remove' | null>(null);
   const [count, setCount] = useState('');
   const [lotNumber, setLotNumber] = useState('');
+  const [actionError, setActionError] = useState(false);
+  const [countError, setCountError] = useState(false);
 
   const handleSubmit = () => {
     if (!action) {
-      Alert.alert('Validation Error', 'Please select Add or Remove.');
+      setActionError(true);
       return;
     }
     if (!count || isNaN(Number(count)) || Number(count) <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid number.');
+      setCountError(true);
       return;
     }
 
@@ -56,6 +58,8 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
     setCount('');
     setLotNumber('');
     setAction(null);
+    setActionError(false);
+    setCountError(false);
   };
 
   return (
@@ -92,8 +96,12 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
 
           <ModalBody>
             <VStack space="lg" mt="$2">
-              <Select onValueChange={val => setAction(val as 'Add' | 'Remove')}>
-                <SelectTrigger pr="$3">
+              <Box>
+              <Select onValueChange={val => { setAction(val as 'Add' | 'Remove'); setActionError(false); }}>
+                <SelectTrigger pr="$3" style={{
+                  borderColor: actionError ? '#ff4d4f' : '#b5b5b5ff',
+                  borderRadius: 8,
+                }}>
                   <SelectInput
                     placeholder="Select Action"
                     value={action ? action.toUpperCase() : ''}
@@ -109,16 +117,32 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
                   </SelectContent>
                 </SelectPortal>
               </Select>
+                {actionError ? (
+                  <Text color="#ff4d4f" fontSize="$sm" mt="$1">
+                    Please Select an Action
+                  </Text>
+                ) : null}
+              </Box>
 
-              <Input>
+                <Box>
+              <Input style={{
+                borderColor: countError ? '#ff4d4f' : '#b5b5b5ff',
+                borderRadius: 8,
+              }}>
                 <InputField
                   placeholder="Number of Vials"
                   keyboardType="numeric"
                   value={count}
-                  onChangeText={setCount}
+                  onChangeText={(text) => { setCount(text); if (countError) setCountError(false); }}
                   color="white"
                 />
               </Input>
+                            {countError ? (
+                  <Text color="#ff4d4f" fontSize="$sm" mt="$1">
+                    Please Enter a Valid Number of Vials
+                  </Text>
+                ) : null}
+              </Box>
 
               <Input>
                 <InputField
@@ -128,6 +152,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
                   color="white"
                 />
               </Input>
+
             </VStack>
           </ModalBody>
 
@@ -140,7 +165,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
               borderColor={'#3a783e'}
               onPress={() => setShowModal(false)}
             >
-              <ButtonText color="#FFFFFF">Cancel</ButtonText>
+              <ButtonText color="#b5b5b5ff">Cancel</ButtonText>
             </Button>
           </ModalFooter>
         </ModalContent>

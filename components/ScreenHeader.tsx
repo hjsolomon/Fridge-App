@@ -66,7 +66,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
               onPress={() => setShowInfo(false)}
             >
               <Icon as={X} color="white" size="xl" />
-            </ModalCloseButton>{' '}
+            </ModalCloseButton>
           </ModalHeader>
 
           <ModalBody>
