@@ -304,7 +304,7 @@ export const insertSensorReading = async (reading: SensorReading) => {
  * ----------------------
  * Retrieves sensor readings that have not yet been synced to the server.
  */
-export const getUnsyncedReadings = async (): Promise<SensorReading[]> => {
+export const getUnsyncedReadings = async (fridge_id: string): Promise<SensorReading[]> => {
   try {
     const result = await executeSql(`SELECT * FROM sensor_readings WHERE synced = 0;`);
     return result.rows.raw() as SensorReading[];
@@ -313,6 +313,22 @@ export const getUnsyncedReadings = async (): Promise<SensorReading[]> => {
     return [];
   }
 };
+
+/**
+ * getAllReadings()
+ * ----------------------
+ * Retrieves sensor readings that have not yet been synced to the server.
+ */
+export const getAllReadings = async (fridge_id: string): Promise<SensorReading[]> => {
+  try {
+    const result = await executeSql(`SELECT * FROM sensor_readings`);
+    return result.rows.raw() as SensorReading[];
+  } catch (err) {
+    console.error('Failed to get all readings:', err);
+    return [];
+  }
+};
+
 
 /**
  * markReadingsAsSynced()

@@ -5,13 +5,7 @@ import PowerSourceIcon from '../components/PowerSourceIcon';
 import { Sun, Zap, Battery } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
 import BatteryBar from '@/components/BatteryReading';
-import {
-  getLatestSensorReading,
-  insertSensorReading,
-  SensorReading,
-} from '../db/database';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import { getLatestSensorReading, SensorReading } from '../db/database';
 
 const FRIDGE_ID = 'fridge_1';
 
@@ -22,58 +16,27 @@ const HomeScreen: React.FC = () => {
   const [battery, setBattery] = useState(false);
   const [powerLevel, setPowerLevel] = useState(3);
 
-  useEffect(() => {
-    const fetchLatestReading = async () => {
-      try {
-        const latestReading: SensorReading | null =
-          await getLatestSensorReading(FRIDGE_ID);
-        if (latestReading) {
-          setTemp(latestReading.temperature);
-          setPowerLevel(latestReading.battery_level);
-        }
-      } catch (err) {
-        console.error('Failed to fetch latest sensor reading:', err);
-      }
-    };
-
-    fetchLatestReading();
-
-    const interval = setInterval(async () => {
-      try {
-        const precision = 10;
-        const randomTemp =
-          Math.floor(
-            Math.random() * (12 * precision + 4 * precision) - 4 * precision,
-          ) /
-          (1 * precision);
-        const randomPower = Math.floor(Math.random() * 101);
-        const timestamp = new Date().toISOString();
-
-        const newReading: SensorReading = {
-          reading_id: uuidv4(),
-          fridge_id: FRIDGE_ID,
-          temperature: randomTemp,
-          battery_level: randomPower,
-          timestamp,
-          synced: 1,
-        };
-
-        await insertSensorReading(newReading);
-
-        await fetchLatestReading();
+  const fetchLatestReading = async () => {
+    try {
+      const latestReading: SensorReading | null = await getLatestSensorReading(FRIDGE_ID);
+      if (latestReading) {
+        setTemp(latestReading.temperature);
+        setPowerLevel(latestReading.battery_level);
 
         const sources = ['solar', 'grid', 'battery'];
-        const randomSource =
-          sources[Math.floor(Math.random() * sources.length)];
-
-        if (randomSource === 'solar') setSolar(prev => !prev);
-        if (randomSource === 'grid') setGrid(prev => !prev);
-        if (randomSource === 'battery') setBattery(prev => !prev);
-      } catch (err) {
-        console.error('Failed to insert or fetch sensor reading:', err);
+        const randomSource = sources[Math.floor(Math.random() * sources.length)];
+        setSolar(randomSource === 'solar');
+        setGrid(randomSource === 'grid');
+        setBattery(randomSource === 'battery');
       }
-    }, 5000);
+    } catch (err) {
+      console.error('Failed to fetch latest sensor reading:', err);
+    }
+  };
 
+  useEffect(() => {
+    fetchLatestReading();
+    const interval = setInterval(fetchLatestReading, 5000);
     return () => clearInterval(interval);
   }, []);
 

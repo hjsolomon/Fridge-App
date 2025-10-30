@@ -35,7 +35,7 @@ const InventoryScreen: React.FC = () => {
       (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
     );
 
-    let runningCount = 0;
+    let runningCount = fridgeInventory?.current_count ?? 0;
 
     const history: InventoryData[] = [];
 
