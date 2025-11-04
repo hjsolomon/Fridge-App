@@ -86,27 +86,30 @@ const InventoryScreen: React.FC = () => {
     try {
       // Fetch base inventory state from table
       const inventory = await getInventory();
-      const fridgeInventory = inventory.find((inv) => inv.fridge_id === FRIDGE_ID);
+      const fridgeInventory = inventory.find(
+        inv => inv.fridge_id === FRIDGE_ID,
+      );
 
       // Fetch and sort logs (oldest → newest)
       const logs = await getInventoryLogs(FRIDGE_ID);
       const sortedLogs = logs.sort(
-        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
 
-      let runningCount = fridgeInventory?.current_count ?? 0;
       const history: InventoryData[] = [];
+      let runningCount = 0;
 
-      // Replay each log event to reconstruct historical inventory levels
       for (const log of sortedLogs) {
-        if (log.action === 'add') runningCount += log.count;
-        else if (log.action === 'remove') runningCount -= log.count;
+        runningCount += log.action === 'add' ? log.count : -log.count;
 
         history.push({
-          timestamp: formatToMonthDay(log.timestamp ?? new Date().toISOString()),
+          timestamp: formatToMonthDay(log.timestamp!),
           count: runningCount,
         });
       }
+
+      setLatestInventory(runningCount);
 
       // Set the newest inventory count
       setLatestInventory(runningCount);
@@ -120,7 +123,7 @@ const InventoryScreen: React.FC = () => {
                 timestamp: formatToMonthDay(new Date().toISOString()),
                 count: fridgeInventory?.current_count ?? 0,
               },
-            ]
+            ],
       );
     } catch (err) {
       console.error('Failed to fetch inventory or logs:', err);
@@ -156,14 +159,14 @@ const InventoryScreen: React.FC = () => {
   const handleSubmit = async (
     action: 'Add' | 'Remove',
     count: number,
-    lotNumber?: string
+    lotNumber?: string,
   ) => {
     try {
       // Prevent removal beyond available inventory
       if (action === 'Remove' && count > latestInventory) {
         Alert.alert(
           'Invalid Operation',
-          'You cannot remove more vials than are currently available.'
+          'You cannot remove more vials than are currently available.',
         );
         return;
       }
@@ -172,7 +175,7 @@ const InventoryScreen: React.FC = () => {
       if (action === 'Add' && latestInventory + count > 600) {
         Alert.alert(
           'Invalid Operation',
-          'The fridge cannot hold more than 600 vials.'
+          'The fridge cannot hold more than 600 vials.',
         );
         return;
       }
