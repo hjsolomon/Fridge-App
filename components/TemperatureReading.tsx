@@ -1,5 +1,6 @@
 import React from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
+import { Dimensions } from 'react-native';
 
 /**
  * TemperatureCircle
@@ -16,8 +17,16 @@ type TemperatureCircleProps = {
   temperature: number;
 };
 
-export const TemperatureCircle: React.FC<TemperatureCircleProps> = ({ temperature }) => {
-  // Determine border color based on temperature range
+export const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
+  temperature,
+}) => {
+  const { height } = Dimensions.get('window');
+
+  const size = height * 0.25;
+  const borderWidth = Math.max(2, Math.round(size * 0.03));
+  const fontSize = Math.max(18, Math.round(size * 0.28));
+
+    // Determine border color based on temperature range
   const getBorderColor = () => {
     if (temperature < 2 || temperature > 8) return '#D34949'; // Red for unsafe temperature
     return '#5DB565'; // Green for safe temperature
@@ -27,14 +36,22 @@ export const TemperatureCircle: React.FC<TemperatureCircleProps> = ({ temperatur
     <Box
       justifyContent="center"
       alignItems="center"
-      borderWidth={5}
-      borderColor={getBorderColor()}
-      borderRadius="$full"
-      width={250}
-      height={250}
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        borderWidth,
+        borderColor: getBorderColor(),
+      }}
     >
-      {/* Display temperature value */}
-      <Text fontSize="$7xl" fontWeight="$normal" color="white">
+      <Text
+        color="white"
+        style={{
+          fontSize,
+          lineHeight: fontSize * 1.05,
+          fontWeight: '400',
+        }}
+      >
         {temperature}°C
       </Text>
     </Box>

@@ -1,31 +1,33 @@
 import React from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
-
-/**
- * InventoryReading
- * -----------------
- * Displays the current inventory count in a styled box.
- *
- * - Shows a title ("Current Inventory")
- * - Renders the current inventory value in large, bold text
- * - Styled with shadows and rounded corners to match app theme
- */
+import { Dimensions } from 'react-native';
 
 type InventoryReadingProps = {
   inventory: number;
 };
 
-export const InventoryReading: React.FC<InventoryReadingProps> = ({ inventory }) => {
+export const InventoryReading: React.FC<InventoryReadingProps> = ({
+  inventory,
+}) => {
+  const { height } = Dimensions.get('window');
+
+  const metricFontLarge = Math.max(28, Math.round(height * 0.06));
+  const metricFontMedium = Math.max(18, Math.round(height * 0.03));
+
+  const spacingS = Math.round(height * 0.01);
+  const spacingM = Math.round(height * 0.02);
+
   return (
     <Box
       alignItems="center"
       justifyContent="center"
       bg="#282828ff"
-      pt="$3"
-      mb="$3"
-      mt="$0"
       rounded="$2xl"
       style={{
+        paddingTop: spacingS,
+        paddingBottom: spacingS,
+        marginTop: spacingS,
+        marginBottom: spacingM,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.25,
@@ -33,13 +35,25 @@ export const InventoryReading: React.FC<InventoryReadingProps> = ({ inventory })
         elevation: 20,
       }}
     >
-      {/* Section title */}
-      <Text color="white" fontSize="$2xl" fontWeight="$normal">
+      {/* Label */}
+      <Text
+        color="white"
+        style={{
+          fontSize: metricFontMedium,
+          fontWeight: '400',
+        }}
+      >
         Current Inventory
       </Text>
 
-      {/* Display inventory value */}
-      <Text color="white" fontSize="$6xl" fontWeight="$bold">
+      {/* Value */}
+      <Text
+        color="white"
+        style={{
+          fontSize: metricFontLarge,
+          fontWeight: '700',
+        }}
+      >
         {inventory}
       </Text>
     </Box>

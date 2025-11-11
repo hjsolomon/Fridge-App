@@ -92,7 +92,7 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
               datasets: [{ data: temps }],
             }}
             width={Dimensions.get('window').width - 60}
-            height={220}
+            height={Dimensions.get('window').height * .28}
             yAxisSuffix="°C"
             yAxisInterval={1}
             chartConfig={{

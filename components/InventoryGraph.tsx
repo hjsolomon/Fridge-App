@@ -60,7 +60,7 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
             datasets: [{ data: inventory.slice(-20) }], // Show last 20 data points
           }}
           width={Dimensions.get('window').width - 40} // Responsive width
-          height={220}
+          height={Dimensions.get('window').height * .28}
           yAxisLabel=""
           yAxisSuffix=""
           yAxisInterval={1}
