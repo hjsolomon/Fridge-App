@@ -52,7 +52,7 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
         flexDirection="row"
         justifyContent="space-around"
         alignItems="center"
-        bg="#3A3A3A"
+        bg="#282828ff"
         px="$3"
         py="$3"
         mx="$2"

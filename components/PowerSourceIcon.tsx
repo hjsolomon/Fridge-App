@@ -1,37 +1,28 @@
 import React from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
-
-/**
- * PowerSourceIcon
- * ----------------
- * Displays an icon and label representing a power source.
- *
- * - Circular icon container with customizable background color
- * - Dims and greys out when inactive
- */
+import LinearGradient from 'react-native-linear-gradient';
 
 interface SourceIconProps {
   icon: React.ReactNode;
   label: string;
-  bgColor: string;
   active?: boolean;
 }
 
 const PowerSourceIcon: React.FC<SourceIconProps> = ({
   icon,
   label,
-  bgColor,
   active = true,
 }) => {
-    const { width, height } = Dimensions.get('window');
+  const { width, height } = Dimensions.get('window');
 
   const containerWidth = Math.min(Math.max(width * 0.26, 64), 120);
   const containerHeight = Math.min(Math.max(height * 0.10, 56), 100);
   const borderRadius = Math.round(Math.min(containerWidth, containerHeight) / 2);
   const iconSize = Math.round(Math.min(containerWidth, containerHeight) * 0.5);
   const labelFontSize = Math.max(12, Math.round(containerHeight * 0.25));
-  
+
+  // Make icon lighter/darker depending on active state
   let renderedIcon = icon;
   if (React.isValidElement(icon)) {
     renderedIcon = React.cloneElement(icon, {
@@ -39,15 +30,23 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
       color: active ? '#FFFFFF' : '#cacacaff',
     } as any);
   }
-    return (
+
+  // Define gradient colors based on the base color
+  const gradientColors = active
+    ? ['#6ebb6aff', '#3ca14a'] // subtle fade
+    : ['#8c8c8cff', '#6c6c6cff']; // dim grey when inactive
+
+  return (
     <Box alignItems="center" mx="$0.5">
-      {/* Icon container */}
-      <Box
+      {/* Gradient container */}
+      <LinearGradient
+        colors={gradientColors}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={{
           width: containerWidth,
           height: containerHeight,
           borderRadius,
-          backgroundColor: active ? bgColor : '#8c8c8cff',
           alignItems: 'center',
           justifyContent: 'center',
           shadowColor: '#000',
@@ -58,7 +57,7 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
         }}
       >
         {renderedIcon}
-      </Box>
+      </LinearGradient>
 
       {/* Icon label */}
       <Text

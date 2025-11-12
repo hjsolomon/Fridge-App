@@ -103,7 +103,7 @@ const DashboardScreen: React.FC = () => {
   /* ------------------------------------------------------------------------ */
 
   return (
-    <Box flex={1} bg="#1C1C1C" style={{ padding: screenPadding }}>
+    <Box flex={1} style={{ padding: screenPadding }}>
       <ScreenHeader
         title="Insights"
         infoText="The Insights screen provides an overview of recent refrigerator performance. Here you can view graphs of temperature trends over time to identify anomalies or trends quickly."

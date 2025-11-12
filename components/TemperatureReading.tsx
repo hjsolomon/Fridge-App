@@ -22,11 +22,11 @@ export const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
 }) => {
   const { height } = Dimensions.get('window');
 
-  const size = height * 0.25;
+  const size = height * 0.27;
   const borderWidth = Math.max(2, Math.round(size * 0.03));
-  const fontSize = Math.max(18, Math.round(size * 0.28));
+  const fontSize = Math.max(18, Math.round(size * 0.29));
 
-    // Determine border color based on temperature range
+  // Determine border color based on temperature range
   const getBorderColor = () => {
     if (temperature < 2 || temperature > 8) return '#D34949'; // Red for unsafe temperature
     return '#5DB565'; // Green for safe temperature
@@ -36,19 +36,25 @@ export const TemperatureCircle: React.FC<TemperatureCircleProps> = ({
     <Box
       justifyContent="center"
       alignItems="center"
+      bg='#1C1C1C'
       style={{
         width: size,
         height: size,
         borderRadius: size / 2,
         borderWidth,
         borderColor: getBorderColor(),
+        shadowColor: getBorderColor(), // Glow matches border color
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: .8,
+        shadowRadius: 15,
+        elevation: 15,
       }}
     >
       <Text
         color="white"
         style={{
           fontSize,
-          lineHeight: fontSize * 1.05,
+          lineHeight: fontSize,
           fontWeight: '400',
         }}
       >

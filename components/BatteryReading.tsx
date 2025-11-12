@@ -1,42 +1,39 @@
 import React from 'react';
 import { Box, Text, HStack } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 /**
  * BatteryBar
  * -----------
- * Displays a stylized battery level indicator that scales
- * dynamically with the screen size.
+ * Displays a stylized battery level indicator with a gradient fill.
  *
- * - Green when > 50%
- * - Yellow between 20–50%
- * - Red when < 20%
+ * - Green gradient when > 50%
+ * - Yellow gradient between 20–50%
+ * - Red gradient when < 20%
  */
 
 const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
-  // Get current screen width to make layout responsive
   const { width } = Dimensions.get('window');
 
-  // Scale battery width and height relative to screen size
-  const barWidth = width * 0.85;  // 70% of screen width
-  const barHeight = width * 0.2; // 8% of screen width for proportional height
-  const tipWidth = barWidth * 0.04; // small tip width (4% of bar width)
-  const tipHeight = barHeight * 0.6; // tip slightly shorter than bar
+  const barWidth = width * 0.85;
+  const barHeight = width * 0.2;
+  const tipWidth = barWidth * 0.04;
+  const tipHeight = barHeight * 0.6;
 
-  // Dynamically determine battery fill color
-  const getColor = () => {
-    if (level > 50) return '#6ebb6aff'; // Green (good)
-    if (level > 20) return '#E2C044';   // Yellow (medium)
-    return '#FF4D4D';                   // Red (low)
+  // Define gradient color sets
+  const getGradientColors = () => {
+    if (level > 50) return ['#6ebb6aff', '#3ca14a']; 
+    if (level > 20) return ['#E2C044', '#d99d36ff']; 
+    return ['#FF4D4D', '#b22f21ff']; 
   };
 
-  // Enforce a minimum width equivalent to 40% fill
-  // This keeps the text visible even at very low battery levels.
+  // Keep a minimum fill visible
   const minFillPercent = 40;
   const adjustedLevel = Math.max(level, minFillPercent);
 
   return (
-    <Box alignItems="center" justifyContent="center" bg="#1C1C1C" mt="$3">
+    <Box alignItems="center" justifyContent="center" bg="transparent" mt="$3">
       <HStack alignItems="center">
         {/* Battery body */}
         <HStack
@@ -56,24 +53,29 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
             elevation: 5,
           }}
         >
-          {/* Battery fill (with min width of 40%) */}
-          <Box
-            mx="$2"
-            rounded="$2xl"
-            h={barHeight * 0.8}
-            w={`${adjustedLevel - 4}%`} // visually consistent fill
-            px="$3"
-            bg={getColor()}
-            alignItems="center"
-            justifyContent="center"
-          >
-            <Text
-              color="$white"
-              fontSize={barHeight * 0.6}
-              fontWeight="$light"
+          {/* Battery fill with gradient */}
+          <Box mx="$2" rounded="$2xl" overflow="hidden">
+            <LinearGradient
+              colors={getGradientColors()}
+              start={{ x: 0, y: 0.5 }}
+              end={{ x: 1, y: 0.5 }}
+              style={{
+                height: barHeight * 0.8,
+                width: (barWidth - 8) * (adjustedLevel / 100),
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 12,
+                
+              }}
             >
-              {level}%
-            </Text>
+              <Text
+                color="$white"
+                fontSize={barHeight * 0.6}
+                fontWeight="$light"
+              >
+                {level}%
+              </Text>
+            </LinearGradient>
           </Box>
         </HStack>
 

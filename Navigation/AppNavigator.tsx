@@ -1,6 +1,9 @@
 import React from 'react';
 import { NavigationContainer, DefaultTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { View, StyleSheet } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Toast from 'react-native-toast-message';
 
 import BluetoothScreen from '../Screens/BluetoothScreen';
 import DashboardScreen from '../Screens/DashboardScreen';
@@ -8,14 +11,7 @@ import InventoryScreen from '../Screens/InventoryScreen';
 import SettingsScreen from '@/Screens/SettingsScreen';
 import HomeScreen from '../Screens/HomeScreen';
 import BottomNav from '../components/BottomNavigation';
-import Toast from 'react-native-toast-message';
 
-/**
- * RootTabParamList
- * -----------------
- * Defines the type-safe parameters for the bottom tab navigator.
- * Each tab currently does not expect route parameters.
- */
 export type RootTabParamList = {
   Bluetooth: undefined;
   Dashboard: undefined;
@@ -24,54 +20,39 @@ export type RootTabParamList = {
   Settings: undefined;
 };
 
-/* -------------------------------------------------------------------------- */
-/*                            Navigation Theme Setup                           */
-/* -------------------------------------------------------------------------- */
-
-/**
- * navTheme
- * ---------
- * Customizes the default React Navigation theme to match the app's dark mode.
- * - Background color set to dark gray
- * - Text color set to white
- */
 const navTheme = {
   ...DefaultTheme,
   colors: {
     ...DefaultTheme.colors,
-    background: '#1C1C1C',
+    background: 'transparent',
     text: '#FFFFFF',
   },
+  
 };
-
-/* -------------------------------------------------------------------------- */
-/*                          Bottom Tab Navigator Setup                         */
-/* -------------------------------------------------------------------------- */
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-/**
- * AppNavigator
- * -------------
- * Main navigation component for the app.
- *
- * - Uses a bottom tab navigator for primary screens
- * - Custom BottomNav component used for the tab bar
- * - Toast component included at root level for global notifications
- */
 const AppNavigator = () => {
   return (
-    <>
+    <View style={{ flex: 1 }}>
+      {/* Background Gradient */}
+      <LinearGradient
+        colors={['#1a1a1aff', '#141414ff']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+
+      {/* Navigation Container */}
       <NavigationContainer theme={navTheme}>
         <Tab.Navigator
-          initialRouteName="Bluetooth" // Default starting screen
+          initialRouteName="Bluetooth"
           screenOptions={{
-            headerShown: false,   // Hide top headers for all screens
-            animation: 'shift',   // Tab transition animation
+            headerShown: false,
+            animation: 'shift',
           }}
-          tabBar={(props) => <BottomNav {...props} />} // Custom tab bar
+          tabBar={(props) => <BottomNav {...props} />}
         >
-          {/* Define each tab with its corresponding screen */}
           <Tab.Screen name="Bluetooth" component={BluetoothScreen} />
           <Tab.Screen name="Dashboard" component={DashboardScreen} />
           <Tab.Screen name="Home" component={HomeScreen} />
@@ -80,9 +61,9 @@ const AppNavigator = () => {
         </Tab.Navigator>
       </NavigationContainer>
 
-      {/* Global toast notifications */}
+      {/* Toast Notifications */}
       <Toast />
-    </>
+    </View>
   );
 };
 

@@ -26,13 +26,9 @@ const HomeScreen: React.FC = () => {
 
   const { height, width } = Dimensions.get('window');
 
-  // Screen padding
-  const screenPadding = Math.round(height * 0.02);
 
-  // Typography
-  const sectionTitleFontSize = Math.max(18, Math.round(height * 0.035));
+  const sectionTitleFontSize = Math.max(18, Math.round(height * 0.025));
 
-  // Vertical spacing
   const spacingXS = Math.round(height * 0.005);
   const spacingS = Math.round(height * 0.01);
   const spacingM = Math.round(height * 0.02);
@@ -76,14 +72,14 @@ const HomeScreen: React.FC = () => {
   /* ------------------------------------------------------------------------ */
 
   return (
-    <Box flex={1} bg="#1c1c1c" style={{ padding: screenPadding }}>
+    <Box flex={1} style={{ padding: spacingM }}>
       <ScreenHeader
         title="Home"
         infoText="The Home screen provides a quick overview of the refrigerator's current status. Here you can view temperature readings, power source information, and battery levels at a glance."
       />
 
       {/* Temperature reading */}
-      <Box alignItems="center" style={{ marginTop: spacingS, marginBottom: spacingM }}>
+      <Box alignItems="center" style={{ marginTop: spacingS, marginBottom: spacingL }}>
         <TemperatureCircle temperature={temp} />
       </Box>
 
@@ -93,7 +89,6 @@ const HomeScreen: React.FC = () => {
         style={{
           fontSize: sectionTitleFontSize,
           fontWeight: '300',
-          marginBottom: spacingS,
         }}
       >
         Power Source(s)
@@ -104,25 +99,22 @@ const HomeScreen: React.FC = () => {
         justifyContent="space-around"
         style={{
           marginTop: spacingS,
-          marginBottom: spacingS,
+          marginBottom: spacingM,
         }}
       >
         <PowerSourceIcon
           icon={<Sun size={powerIconSize} color="white" />}
           label="Solar"
-          bgColor="#5DB565"
           active={solar}
         />
         <PowerSourceIcon
           icon={<Zap size={powerIconSize} color="white" />}
           label="Grid"
-          bgColor="#5DB565"
           active={grid}
         />
         <PowerSourceIcon
           icon={<Battery size={powerIconSize} color="white" />}
           label="Battery"
-          bgColor="#5DB565"
           active={battery}
         />
       </HStack>
@@ -133,7 +125,6 @@ const HomeScreen: React.FC = () => {
         style={{
           fontSize: sectionTitleFontSize,
           fontWeight: '300',
-          marginBottom: spacingXS,
         }}
       >
         Battery Level
