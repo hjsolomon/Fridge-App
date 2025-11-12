@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1055820297787",
+    "project_id": "fridge-app-mqp",
+    "storage_bucket": "fridge-app-mqp.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055820297787:android:0ef2e06e7d13fd96268e1e",
+        "android_client_info": {
+          "package_name": "com.fridgeapp"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJq16TO2bZdMiYOoLZ_MsqKI-oKVteMek"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -46,7 +46,7 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
     if (tempData && tempData.length > 0) {
       // Show the last 10 readings for better readability on small screens
       const visibleData = tempData.slice(-10);
-      const newLabels = visibleData.map((item) => item.timestamp).slice(-10);
+      const newLabels = visibleData.map((item) => item.timestamp).slice(-6);
       const newTemps = visibleData.map((item) => item.value);
 
       setLabels(newLabels);
