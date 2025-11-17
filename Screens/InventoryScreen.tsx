@@ -5,13 +5,14 @@ import { ScreenHeader } from '../components/ScreenHeader';
 import InventoryReading from '../components/InventoryReading';
 import InventoryGraph from '@/components/InventoryGraph';
 import InventoryForm from '@/components/InventoryForm';
+import db from '../db/firestore';
+
+import { InventoryLog } from '../db/database';
 
 import {
-  getInventory,
-  getInventoryLogs,
-  logInventoryAction,
-  InventoryLog,
-} from '../db/database';
+  getInventoryLogsFirestore,
+  logInventoryActionFirestore,
+} from '@/db/firestoreInventory';
 
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
@@ -84,44 +85,35 @@ const InventoryScreen: React.FC = () => {
    */
   const fetchInventory = useCallback(async () => {
     try {
-      // Fetch base inventory state from table
-      const inventory = await getInventory();
-      const fridgeInventory = inventory.find(
-        inv => inv.fridge_id === FRIDGE_ID,
-      );
-
       // Fetch and sort logs (oldest → newest)
-      const logs = await getInventoryLogs(FRIDGE_ID);
+      const logs = await getInventoryLogsFirestore(FRIDGE_ID);
       const sortedLogs = logs.sort(
         (a, b) =>
           new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
 
-      const history: InventoryData[] = [];
       let runningCount = 0;
+      const history = [];
 
       for (const log of sortedLogs) {
         runningCount += log.action === 'add' ? log.count : -log.count;
 
         history.push({
-          timestamp: formatToMonthDay(log.timestamp!),
+          timestamp: formatToMonthDay(
+            log.timestamp ?? new Date().toISOString(),
+          ),
           count: runningCount,
         });
       }
 
       setLatestInventory(runningCount);
-
-      // Set the newest inventory count
-      setLatestInventory(runningCount);
-
-      // If no logs exist, show a single entry based on current inventory
       setInventoryData(
         history.length > 0
           ? history
           : [
               {
                 timestamp: formatToMonthDay(new Date().toISOString()),
-                count: fridgeInventory?.current_count ?? 0,
+                count: runningCount,
               },
             ],
       );
@@ -193,7 +185,7 @@ const InventoryScreen: React.FC = () => {
       };
 
       // Save the inventory change
-      await logInventoryAction(log);
+      await logInventoryActionFirestore(log);
       console.log('Inventory Logged:', log);
 
       // Refresh all inventory + graph calculations

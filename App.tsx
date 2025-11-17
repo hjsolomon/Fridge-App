@@ -7,7 +7,6 @@ import { startSensorSimulator } from './utils/SensorSimulator';
 
 const App = () => {
   const [dbReady, setDbReady] = useState(false);
-
   useEffect(() => {
     startSensorSimulator();
     const initDatabase = async () => {

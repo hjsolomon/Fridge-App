@@ -29,7 +29,6 @@ const HomeScreen: React.FC = () => {
 
   const sectionTitleFontSize = Math.max(18, Math.round(height * 0.025));
 
-  const spacingXS = Math.round(height * 0.005);
   const spacingS = Math.round(height * 0.01);
   const spacingM = Math.round(height * 0.02);
   const spacingL = Math.round(height * 0.04);
@@ -131,7 +130,7 @@ const HomeScreen: React.FC = () => {
       </Text>
 
       {/* Battery Bar */}
-      <Box alignItems="center" style={{ marginTop: spacingXS, marginBottom: spacingL }}>
+      <Box alignItems="center" style={{ marginBottom: spacingL }}>
         <BatteryBar level={powerLevel} />
       </Box>
     </Box>

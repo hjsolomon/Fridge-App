@@ -1,0 +1,13 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "InventoryLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fridge_id", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

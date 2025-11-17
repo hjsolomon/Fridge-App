@@ -54,26 +54,25 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
         alignItems="center"
         bg="#282828ff"
         px="$3"
-        py="$3"
+        py="$2"
         mx="$2"
-        mb="$2"
+        mb="$1"
         borderTopWidth={1}
         borderRadius="$full"
         style={{
-          // Shadow for elevation effect
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.25,
           shadowRadius: 4,
           elevation: 5,
-          width: '95%', // Slight margin from edges
-          maxWidth,     // Keeps it centered on larger displays
+          width: '95%',
+          maxWidth,    
         }}
       >
         {/* Loop through all navigation routes */}
         {state.routes.map((route, index) => {
-          const isFocused = state.index === index; // Highlight active route
-          const Icon = icons[route.name]; // Get matching icon
+          const isFocused = state.index === index; 
+          const Icon = icons[route.name]; 
 
           return (
             <Button
