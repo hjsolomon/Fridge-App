@@ -33,8 +33,8 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
 
   // Define gradient colors based on the base color
   const gradientColors = active
-    ? ['#6ebb6aff', '#3ca14a'] // subtle fade
-    : ['#8c8c8cff', '#6c6c6cff']; // dim grey when inactive
+    ? ['#6ebb6aff', '#3ca14a'] 
+    : ['#8c8c8cff', '#6c6c6cff']; 
 
   return (
     <Box alignItems="center" mx="$0.5">

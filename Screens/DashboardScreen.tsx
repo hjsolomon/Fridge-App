@@ -18,8 +18,18 @@ interface TempData {
 
 const formatToMonthDay = (isoString: string) => {
   const date = new Date(isoString);
-  return `${date.getMonth() + 1}/${date.getDate()}`;
+
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+
+  let hours = date.getHours();
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+
+
+  return `${month}/${day} ${hours}:${minutes}`;
+
 };
+
 
 const DashboardScreen: React.FC = () => {
   const [tempData, setTempData] = useState<TempData[]>([]);
@@ -106,7 +116,7 @@ const DashboardScreen: React.FC = () => {
     <Box flex={1} style={{ padding: screenPadding }}>
       <ScreenHeader
         title="Insights"
-        infoText="The Insights screen provides an overview of recent refrigerator performance. Here you can view graphs of temperature trends over time to identify anomalies or trends quickly."
+        infoText="The Insights screen provides an overview of recent refrigerator performance. Here you can view graphs of temperature trends over time and track the time since the last update."
       />
 
       {/* Graph */}

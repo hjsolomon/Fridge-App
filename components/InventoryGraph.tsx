@@ -25,8 +25,8 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
   // Extract timestamps and counts from incoming data
   useEffect(() => {
     if (inventoryData && inventoryData.length > 0) {
-      const newLabels = inventoryData.map((item) => item.timestamp);
-      const newInventory = inventoryData.map((item) => item.count);
+      const newLabels = inventoryData.map(item => item.timestamp);
+      const newInventory = inventoryData.map(item => item.count);
       setLabels(newLabels);
       setInventory(newInventory);
     }
@@ -52,15 +52,24 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
         Inventory Over Time
       </Text>
 
+      <Text color="white" fontSize="$lg" fontWeight="$normal" pb="$2">
+        Vials
+      </Text>
+
       {/* Render chart if data is available */}
       {labels.length > 0 ? (
         <LineChart
           data={{
             labels: labels.slice(-4), // Display most recent 4 timestamps
-            datasets: [{ data: inventory.slice(-20) }], // Show last 20 data points
+            datasets: [
+              {
+                data: inventory.slice(-20), // Show last 20 data points
+                color: () => `rgba(255, 255, 255, 0.63)`, // <-- ONLY affects stroke
+              },
+            ], 
           }}
           width={Dimensions.get('window').width - 40} // Responsive width
-          height={Dimensions.get('window').height * .28}
+          height={Dimensions.get('window').height * 0.28}
           yAxisLabel=""
           yAxisSuffix=""
           yAxisInterval={1}
@@ -73,7 +82,7 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
             labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
             style: { borderRadius: 16 },
             propsForDots: {
-              r: '6',
+              r: '0',
               strokeWidth: '2',
               stroke: '#282828ff',
             },

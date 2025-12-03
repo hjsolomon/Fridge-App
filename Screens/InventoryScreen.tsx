@@ -1,11 +1,24 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box } from '@gluestack-ui/themed';
+import {
+  Box,
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
+  Text,
+  ModalFooter,
+  Button,
+  ButtonText,
+} from '@gluestack-ui/themed';
 
 import { ScreenHeader } from '../components/ScreenHeader';
 import InventoryReading from '../components/InventoryReading';
 import InventoryGraph from '@/components/InventoryGraph';
 import InventoryForm from '@/components/InventoryForm';
 import db from '../db/firestore';
+import { Dimensions } from 'react-native';
 
 import { InventoryLog } from '../db/database';
 
@@ -67,6 +80,15 @@ const InventoryScreen: React.FC = () => {
 
   // Latest computed count (reflected in UI and validation logic)
   const [latestInventory, setLatestInventory] = useState<number>(0);
+
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingAction, setPendingAction] = useState<{
+    action: 'Add' | 'Remove';
+    count: number;
+    lotNumber?: string;
+  } | null>(null);
+  const width = Dimensions.get('window').width;
+  const modalWidth = width * 0.8; // Modal scales proportionally
 
   /* ------------------------------------------------------------------------ */
   /*                       Fetch & Rebuild Inventory State                    */
@@ -153,46 +175,51 @@ const InventoryScreen: React.FC = () => {
     count: number,
     lotNumber?: string,
   ) => {
+    // Prevent removal beyond available inventory
+    if (action === 'Remove' && count > latestInventory) {
+      Alert.alert(
+        'Invalid Operation',
+        'You cannot remove more vials than are currently available.',
+      );
+      return;
+    }
+
+    // Prevent exceeding hard fridge capacity
+    if (action === 'Add' && latestInventory + count > 600) {
+      Alert.alert(
+        'Invalid Operation',
+        'The fridge cannot hold more than 600 vials.',
+      );
+      return;
+    }
+    setPendingAction({ action, count, lotNumber });
+    setShowConfirm(true);
+  };
+
+  const confirmSubmission = async () => {
+    if (!pendingAction) return;
+
+    const { action, count, lotNumber } = pendingAction;
+    const timestampISO = new Date().toISOString();
+
+    const log: InventoryLog = {
+      log_id: uuidv4(),
+      fridge_id: FRIDGE_ID,
+      action: action.toLowerCase() as 'add' | 'remove',
+      count,
+      timestamp: timestampISO,
+      synced: 0,
+    };
+
     try {
-      // Prevent removal beyond available inventory
-      if (action === 'Remove' && count > latestInventory) {
-        Alert.alert(
-          'Invalid Operation',
-          'You cannot remove more vials than are currently available.',
-        );
-        return;
-      }
-
-      // Prevent exceeding hard fridge capacity
-      if (action === 'Add' && latestInventory + count > 600) {
-        Alert.alert(
-          'Invalid Operation',
-          'The fridge cannot hold more than 600 vials.',
-        );
-        return;
-      }
-
-      const timestampISO = new Date().toISOString();
-
-      // Build a new log entry for the change
-      const log: InventoryLog = {
-        log_id: uuidv4(),
-        fridge_id: FRIDGE_ID,
-        action: action.toLowerCase() as 'add' | 'remove',
-        count,
-        timestamp: timestampISO,
-        synced: 0,
-      };
-
-      // Save the inventory change
       await logInventoryActionFirestore(log);
-      console.log('Inventory Logged:', log);
-
-      // Refresh all inventory + graph calculations
       await fetchInventory();
     } catch (err) {
-      console.error('Failed to log inventory action:', err);
+      console.error('Failed to submit inventory change:', err);
     }
+
+    setShowConfirm(false);
+    setPendingAction(null);
   };
 
   /* -------------------------------------------------------------------------- */
@@ -204,7 +231,7 @@ const InventoryScreen: React.FC = () => {
       {/* Screen title + info popup */}
       <ScreenHeader
         title="Inventory"
-        infoText="The Inventory screen allows you to manage the refrigerator's contents. Here you can view current inventory levels, add or remove items, and track changes over time."
+        infoText="The Inventory screen allows you to manage the refrigerator's contents. Here you can view current inventory levels, add or remove vaccines, and track inventory changes over time."
       />
 
       {/* Display card for current inventory */}
@@ -215,6 +242,46 @@ const InventoryScreen: React.FC = () => {
 
       {/* Add/remove form */}
       <InventoryForm onSubmit={handleSubmit} />
+
+      {/* CONFIRMATION MODAL */}
+      <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>
+        <ModalBackdrop />
+        <ModalContent bg="#282828" width={modalWidth}>
+          {/* Header */}
+          <ModalHeader>
+            <Text color="white" fontSize="$xl" fontWeight="$bold">
+              Confirm {pendingAction?.action}
+            </Text>
+            <ModalCloseButton />
+          </ModalHeader>
+
+          {/* Body */}
+          <ModalBody>
+            <Text color="white" fontSize="$md">
+              Are you sure you want to{' '}
+              <Text color="white" fontWeight="$bold" underline={true}>
+                {pendingAction?.action.toLowerCase()} {pendingAction?.count}
+              </Text>{' '}
+              vials?
+            </Text>
+          </ModalBody>
+
+          {/* Footer */}
+          <ModalFooter>
+            <Button bg="#3a783e" mr="$2" onPress={confirmSubmission}>
+              <ButtonText color="white">Confirm</ButtonText>
+            </Button>
+
+            <Button
+              variant="outline"
+              borderColor="#3a783e"
+              onPress={() => setShowConfirm(false)}
+            >
+              <ButtonText color="#b5b5b5ff">Cancel</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };

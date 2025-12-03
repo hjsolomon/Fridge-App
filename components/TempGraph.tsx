@@ -46,7 +46,7 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
     if (tempData && tempData.length > 0) {
       // Show the last 10 readings for better readability on small screens
       const visibleData = tempData.slice(-10);
-      const newLabels = visibleData.map((item) => item.timestamp).slice(-6);
+      const newLabels = visibleData.map((item) => item.timestamp).slice(-3);
       const newTemps = visibleData.map((item) => item.value);
 
       setLabels(newLabels);
@@ -85,11 +85,16 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
             Temperature Over Time
           </Text>
 
+
+
           {/* Line Chart Displaying Temperature History */}
           <LineChart
             data={{
               labels,
-              datasets: [{ data: temps }],
+              datasets: [{ data: temps, 
+                        color: () => `rgba(255, 255, 255, 0.63)` // <-- ONLY affects stroke
+
+              }],
             }}
             width={Dimensions.get('window').width - 60}
             height={Dimensions.get('window').height * .28}
@@ -104,9 +109,7 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
               labelColor: (opacity = 1) => `rgba(255, 255, 255, ${opacity})`,
               style: { borderRadius: 16 },
               propsForDots: {
-                r: '5',
-                strokeWidth: '2',
-                stroke: '#ffffff',
+                r: '0',
               },
             }}
             bezier
