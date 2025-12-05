@@ -17,6 +17,7 @@
     "@gluestack-ui/themed": "^1.1.73",
     "@gluestack-ui/utils": "^3.0.7",
     "@legendapp/motion": "^2.4.0",
+    "@ptomasroos/react-native-multi-slider": "^2.2.2",
     "@react-native-community/blur": "^4.4.1",
     "@react-native-firebase/app": "^23.5.0",
     "@react-native-firebase/firestore": "^23.5.0",

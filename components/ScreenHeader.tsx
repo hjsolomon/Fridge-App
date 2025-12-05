@@ -29,7 +29,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   const { width, height } = Dimensions.get('window');
 
 
-  const titleFontSize = Math.max(20, Math.round(height * 0.04));
+  const titleFontSize = Math.max(20, Math.round(height * 0.035));
   const headerMarginY = Math.round(height * 0.008);
   const dividerMarginBottom = Math.round(height * 0.02);
 

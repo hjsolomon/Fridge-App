@@ -14,9 +14,9 @@ import {
 } from '@gluestack-ui/themed';
 
 import { ScreenHeader } from '../components/ScreenHeader';
-import InventoryReading from '../components/InventoryReading';
-import InventoryGraph from '@/components/InventoryGraph';
-import InventoryForm from '@/components/InventoryForm';
+import InventoryReading from '../components/inventory/InventoryReading';
+import InventoryGraph from '@/components/inventory/InventoryGraph';
+import InventoryForm from '@/components/inventory/InventoryForm';
 import db from '../db/firestore';
 import { Dimensions } from 'react-native';
 

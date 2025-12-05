@@ -48,11 +48,17 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
       }}
     >
       {/* Section title */}
-      <Text color="white" fontSize="$2xl" fontWeight="$normal" pb="$2">
+      <Text color="white" fontSize="$2xl" fontWeight="$normal">
         Inventory Over Time
       </Text>
 
-      <Text color="white" fontSize="$lg" fontWeight="$normal" pb="$2">
+      <Text
+        color= "rgba(255, 255, 255, 0.63)"
+        fontSize="$sm"
+        fontWeight="$normal"
+        alignSelf="flex-start"
+        pl="$4"
+      >
         Vials
       </Text>
 

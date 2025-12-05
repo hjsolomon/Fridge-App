@@ -3,7 +3,7 @@ import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 
 import { ScreenHeader } from '../components/ScreenHeader';
-import TempGraph from '../components/TempGraph';
+import TempGraph from '../components/insights/TempGraph';
 
 import { getLatestSensorReading, getAllReadings } from '../db/database';
 import 'react-native-get-random-values';
@@ -40,13 +40,12 @@ const DashboardScreen: React.FC = () => {
   const base = height;
 
   // Text sizes
-  const metricFontLarge = Math.max(28, Math.round(base * 0.035));
+  const metricFontLarge = Math.max(20, Math.round(base * 0.035));
   const metricFontMedium = Math.max(20, Math.round(base * 0.03));
 
   // Spacing / padding
   const cardPaddingTop = Math.round(base * 0.01);
   const spacingS = Math.round(base * 0.01);
-  const spacingM = Math.round(base * 0.02);
 
   // Screen padding
   const screenPadding = Math.round(base * 0.02);
@@ -142,11 +141,7 @@ const DashboardScreen: React.FC = () => {
       >
         <Text
           color="white"
-          style={{
-            fontSize: metricFontMedium,
-            fontWeight: '400',
-            paddingBottom: spacingS,
-          }}
+          fontSize="$2xl"
         >
           Time Since Last Update
         </Text>
@@ -181,11 +176,8 @@ const DashboardScreen: React.FC = () => {
       >
         <Text
           color="white"
-          style={{
-            fontSize: metricFontMedium,
-            fontWeight: '400',
-            paddingBottom: spacingS,
-          }}
+          fontSize="$2xl"
+
         >
           Current Temperature
         </Text>

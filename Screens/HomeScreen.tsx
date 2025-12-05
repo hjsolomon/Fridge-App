@@ -2,12 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { Box, Text, HStack } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 
-import TemperatureCircle from '../components/TemperatureReading';
-import PowerSourceIcon from '../components/PowerSourceIcon';
+import TemperatureCircle from '../components/home/TemperatureReading';
+import PowerSourceIcon from '../components/home/PowerSourceIcon';
 import { Sun, Zap, Battery } from 'lucide-react-native';
 
 import { ScreenHeader } from '../components/ScreenHeader';
-import BatteryBar from '@/components/BatteryReading';
+import BatteryBar from '@/components/home/BatteryReading';
 
 import { getLatestSensorReading, SensorReading } from '../db/database';
 
