@@ -16,11 +16,11 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
 }) => {
   const { width, height } = Dimensions.get('window');
 
-  const containerWidth = Math.min(Math.max(width * 0.26, 64), 120);
-  const containerHeight = Math.min(Math.max(height * 0.10, 56), 100);
+  const containerWidth = Math.min(width * 0.27, 120);
+  const containerHeight = Math.min(height * 0.075, 100);
   const borderRadius = Math.round(Math.min(containerWidth, containerHeight) / 2);
-  const iconSize = Math.round(Math.min(containerWidth, containerHeight) * 0.5);
-  const labelFontSize = Math.max(12, Math.round(containerHeight * 0.25));
+  const iconSize = Math.round(containerHeight * 0.6);
+  const labelFontSize = Math.max(12, Math.round(containerHeight * 0.28));
 
   // Make icon lighter/darker depending on active state
   let renderedIcon = icon;

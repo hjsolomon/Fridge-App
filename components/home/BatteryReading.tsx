@@ -61,7 +61,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
               end={{ x: 1, y: 0.5 }}
               style={{
                 height: barHeight * 0.8,
-                width: (barWidth - 8) * (adjustedLevel / 100),
+                width: (barWidth - 30) * (adjustedLevel / 100),
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: 12,
@@ -70,7 +70,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
             >
               <Text
                 color="$white"
-                fontSize={barHeight * 0.6}
+                fontSize={barHeight * 0.55}
                 fontWeight="$light"
               >
                 {level}%

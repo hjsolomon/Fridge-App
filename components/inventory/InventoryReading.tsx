@@ -11,7 +11,7 @@ export const InventoryReading: React.FC<InventoryReadingProps> = ({
 }) => {
   const { height } = Dimensions.get('window');
 
-  const metricFontLarge = Math.max(28, Math.round(height * 0.06));
+  const metricFontLarge = Math.max(28, Math.round(height * 0.035));
   const metricFontMedium = Math.max(18, Math.round(height * 0.03));
 
   const spacingS = Math.round(height * 0.01);
@@ -39,8 +39,8 @@ export const InventoryReading: React.FC<InventoryReadingProps> = ({
       <Text
         color="white"
         style={{
-          fontSize: metricFontMedium,
-          fontWeight: '400',
+          fontSize: metricFontLarge,
+          fontWeight: '600',
         }}
       >
         Current Inventory
@@ -51,7 +51,7 @@ export const InventoryReading: React.FC<InventoryReadingProps> = ({
         color="white"
         style={{
           fontSize: metricFontLarge,
-          fontWeight: '700',
+          fontWeight: '400',
         }}
       >
         {inventory}

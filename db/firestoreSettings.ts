@@ -15,3 +15,23 @@ export async function updateTemperatureRange(fridgeId: string, min: number, max:
     { merge: true }
   );
 }
+
+export async function updateBatteryLevel(fridgeId: string, value: number) {
+    // Update the settings document with new min and max temperature
+  return settingsRef(fridgeId).set(
+    {
+      battery_min: value,
+    },
+    { merge: true }
+  );
+}
+
+export async function updateGridDisconnect(fridgeId: string, isEnabled: boolean) {
+    // Update the settings document with new grid disconnect status
+  return settingsRef(fridgeId).set(
+    {
+      grid_disconnect: isEnabled,
+    },
+    { merge: true }
+  );
+}

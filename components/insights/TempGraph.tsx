@@ -11,7 +11,7 @@ import { LineChart } from 'react-native-chart-kit';
  * TempGraphProps
  * ---------------
  * Props for the TempGraph component.
- * 
+ *
  * @prop tempData - Array of temperature readings, each with:
  *  - `timestamp`: string — The time the reading was taken.
  *  - `value`: number — The temperature value in °C.
@@ -37,6 +37,11 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
   /* ----------------------------- State Management ---------------------------- */
   const [labels, setLabels] = useState<string[]>([]);
   const [temps, setTemps] = useState<number[]>([]);
+  const { height } = Dimensions.get('window');
+  const metricFontLarge = Math.max(20, Math.round(height * 0.03));
+
+  // Spacing / padding
+  const spacingS = Math.round(height * 0.01);
 
   /* -------------------------------------------------------------------------- */
   /*                              Data Processing                               */
@@ -46,8 +51,8 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
     if (tempData && tempData.length > 0) {
       // Show the last 10 readings for better readability on small screens
       const visibleData = tempData.slice(-10);
-      const newLabels = visibleData.map((item) => item.timestamp).slice(-3);
-      const newTemps = visibleData.map((item) => item.value);
+      const newLabels = visibleData.map(item => item.timestamp).slice(-3);
+      const newTemps = visibleData.map(item => item.value);
 
       setLabels(newLabels);
       setTemps(newTemps);
@@ -81,23 +86,31 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
       {labels.length > 0 && temps.length > 0 ? (
         <>
           {/* Chart Title */}
-          <Text color="white" fontSize="$2xl" fontWeight="$normal" pb="$2">
+          <Text
+            color="white"
+            style={{
+              fontSize: metricFontLarge,
+              fontWeight: '600',
+              paddingBottom: spacingS,
+            }}
+            pb="$2"
+          >
             Temperature Over Time
           </Text>
-
-
 
           {/* Line Chart Displaying Temperature History */}
           <LineChart
             data={{
               labels,
-              datasets: [{ data: temps, 
-                        color: () => `rgba(255, 255, 255, 0.63)` // <-- ONLY affects stroke
-
-              }],
+              datasets: [
+                {
+                  data: temps,
+                  color: () => `rgba(255, 255, 255, 0.63)`, // <-- ONLY affects stroke
+                },
+              ],
             }}
             width={Dimensions.get('window').width - 60}
-            height={Dimensions.get('window').height * .28}
+            height={Dimensions.get('window').height * 0.28}
             yAxisSuffix="°C"
             yAxisInterval={1}
             chartConfig={{

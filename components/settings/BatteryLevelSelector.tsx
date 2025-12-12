@@ -14,32 +14,26 @@ import {
 import { ChevronDown } from 'lucide-react-native';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
 const FRIDGE_ID = 'fridge_1';
-import { updateTemperatureRange } from '../../db/firestoreSettings';
+import { updateBatteryLevel } from '../../db/firestoreSettings';
 
-interface TempRangeSelectorProps {
-  minTemp?: number;
-  maxTemp?: number;
+interface BatteryLevelSelectorProps {
+  minBattery?: number;
 }
 
-const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
-  minTemp,
-  maxTemp,
+const BatteryLevelSelector: React.FC<BatteryLevelSelectorProps> = ({
+  minBattery,
 }) => {
   const [open, setOpen] = useState(false);
-  const [tempRange, setTempRange] = useState<[number, number]>([
-    minTemp ?? 2,
-    maxTemp ?? 8,
-  ]);
+  const [batteryLevel, setBatteryLevel] = useState<number>(minBattery ?? 20);
 
-  const handleTempChange = async (values: number[]) => {
-    const [min, max] = values;
-    setTempRange([min, max]);
+  const handleBatteryChange = async (value: number) => {
+    setBatteryLevel(value);
 
     try {
-      await updateTemperatureRange(FRIDGE_ID, min, max);
-      console.log('Temp range updated in Firestore:', min, max);
+      await updateBatteryLevel(FRIDGE_ID, value);
+      console.log('Battery range updated in Firestore:', value);
     } catch (error) {
-      console.error('Failed to update temp range:', error);
+      console.error('Failed to update battery range:', error);
     }
   };
 
@@ -49,16 +43,15 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
       width="100%"
       bg="transparent"
       onValueChange={value => {
-        setOpen(value.includes('temp-range'));
+        setOpen(value.includes('battery-level'));
       }}
     >
-      <AccordionItem value="temp-range" bg="#282828ff"         rounded="$2xl"
->
-        <AccordionHeader >
+      <AccordionItem value="battery-level" bg="#282828ff" rounded="$2xl">
+        <AccordionHeader>
           <AccordionTrigger>
             <HStack width="100%" alignItems="center">
               <AccordionTitleText color="white" fontSize="$lg">
-                Temperature Range
+                Minimum Battery Level
               </AccordionTitleText>
 
               <Box
@@ -74,17 +67,17 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
 
         <AccordionContent>
           <AccordionContentText color="white" fontSize="$md" pb="$4" mb="$7">
-            Here you can set your preferred temperature range for the
-            refrigerator.
+            Here you can set the minimum battery level (in %) at which you would
+            like to receive notifications.
           </AccordionContentText>
           <MultiSlider
-            values={[0, 8]}
+            values={[batteryLevel]}
             min={0}
-            max={10}
-            step={0.5}
+            max={100}
+            step={5}
             allowOverlap={false}
             snapped
-            onValuesChangeFinish={handleTempChange}
+            onValuesChangeFinish={vals => handleBatteryChange(vals[0])}
             enableLabel
             customLabel={e => (
               <Box
@@ -106,23 +99,7 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
                   }}
                 >
                   <Text style={{ color: 'white', fontWeight: '600' }}>
-                    {e.oneMarkerValue}°C
-                  </Text>
-                </Box>
-
-                {/* RIGHT LABEL */}
-                <Box
-                  style={{
-                    position: 'absolute',
-                    left: e.twoMarkerLeftPosition - 20,
-                    backgroundColor: '#3ca14a',
-                    paddingVertical: 4,
-                    paddingHorizontal: 8,
-                    borderRadius: 6,
-                  }}
-                >
-                  <Text style={{ color: 'white', fontWeight: '600' }}>
-                    {e.twoMarkerValue}°C
+                    {e.oneMarkerValue}%
                   </Text>
                 </Box>
               </Box>
@@ -144,4 +121,4 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
   );
 };
 
-export default TempRangeSelector;
+export default BatteryLevelSelector;
