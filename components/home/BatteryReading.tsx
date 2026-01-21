@@ -23,9 +23,9 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
 
   // Define gradient color sets
   const getGradientColors = () => {
-    if (level > 50) return ['#6ebb6aff', '#3ca14a']; 
+    if (level > 50) return ['#65b760ff', '#3ca14a']; 
     if (level > 20) return ['#E2C044', '#d99d36ff']; 
-    return ['#FF4D4D', '#b22f21ff']; 
+    return ['#d43737ff', '#b22f21ff']; 
   };
 
   // Keep a minimum fill visible

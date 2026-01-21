@@ -27,7 +27,7 @@ const HomeScreen: React.FC = () => {
   const { height, width } = Dimensions.get('window');
 
 
-  const sectionTitleFontSize = Math.max(18, Math.round(height * 0.025));
+  const sectionTitleFontSize = Math.max(18, Math.round(height * 0.022));
 
   const spacingS = Math.round(height * 0.01);
   const spacingM = Math.round(height * 0.02);

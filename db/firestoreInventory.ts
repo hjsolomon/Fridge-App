@@ -17,6 +17,15 @@ export async function getInventoryLogsFirestore(fridgeId: string) {
   return snapshot.docs.map(d => d.data() as InventoryLog);
 }
 
+// Fetch Current Inventory
+export async function getCurrentInventoryFirestore(fridgeId: string) {
+  const doc = await inventoryRef(fridgeId).get();
+  if (doc.exists()) {
+    return doc.data()?.current_count ?? 0;
+  }
+  return 0;
+}
+
 // Add log + update inventory count safely
 export async function logInventoryActionFirestore(log: InventoryLog) {
   // Write log document (creates collection automatically)

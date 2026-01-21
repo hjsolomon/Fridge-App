@@ -40,11 +40,13 @@ const DashboardScreen: React.FC = () => {
   const base = height;
 
   // Text sizes
-  const metricFontLarge = Math.max(20, Math.round(base * 0.03));
+  const metricFontLarge = Math.max(20, Math.round(base * 0.038));
+  const metricFontMedium = Math.max(10, Math.round(base * 0.02));
 
   // Spacing / padding
   const cardPaddingTop = Math.round(base * 0.01);
   const spacingS = Math.round(base * 0.01);
+  const spacingXS = Math.round(base * 0.005);
 
   // Screen padding
   const screenPadding = Math.round(base * 0.02);
@@ -141,9 +143,9 @@ const DashboardScreen: React.FC = () => {
         <Text
           color="white"
           style={{
-            fontSize: metricFontLarge,
+            fontSize: metricFontMedium,
             fontWeight: '600',
-            paddingBottom: spacingS,
+            paddingBottom: spacingXS,
           }}
         >
           Time Since Last Update
@@ -153,7 +155,7 @@ const DashboardScreen: React.FC = () => {
           color="white"
           style={{
             fontSize: metricFontLarge,
-            fontWeight: '400',
+            fontWeight: '700',
             paddingBottom: spacingS,
           }}
         >
@@ -180,9 +182,9 @@ const DashboardScreen: React.FC = () => {
         <Text
           color="white"
           style={{
-            fontSize: metricFontLarge,
+            fontSize: metricFontMedium,
             fontWeight: '500',
-            paddingBottom: spacingS,
+            paddingBottom: spacingXS,
           }}
         >
           Current Temperature
@@ -192,7 +194,7 @@ const DashboardScreen: React.FC = () => {
           color="white"
           style={{
             fontSize: metricFontLarge,
-            fontWeight: '300',
+            fontWeight: '700',
             paddingBottom: spacingS,
           }}
         >

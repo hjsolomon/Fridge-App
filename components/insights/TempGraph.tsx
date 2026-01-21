@@ -38,7 +38,7 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
   const [labels, setLabels] = useState<string[]>([]);
   const [temps, setTemps] = useState<number[]>([]);
   const { height } = Dimensions.get('window');
-  const metricFontLarge = Math.max(20, Math.round(height * 0.03));
+  const metricFontMedium = Math.max(10, Math.round(height * 0.02));
 
   // Spacing / padding
   const spacingS = Math.round(height * 0.01);
@@ -89,7 +89,7 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
           <Text
             color="white"
             style={{
-              fontSize: metricFontLarge,
+              fontSize: metricFontMedium,
               fontWeight: '600',
               paddingBottom: spacingS,
             }}
@@ -126,10 +126,12 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
               },
             }}
             bezier
-            style={{
-              marginVertical: 8,
-              borderRadius: 16,
-            }}
+          style={{
+            marginVertical: 8,
+            marginRight: 15,
+            marginLeft: -10,
+            borderRadius: 16,
+          }}
           />
         </>
       ) : (

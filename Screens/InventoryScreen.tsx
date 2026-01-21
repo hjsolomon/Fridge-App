@@ -25,6 +25,7 @@ import { InventoryLog } from '../db/database';
 import {
   getInventoryLogsFirestore,
   logInventoryActionFirestore,
+  getCurrentInventoryFirestore,
 } from '@/db/firestoreInventory';
 
 import 'react-native-get-random-values';
@@ -87,6 +88,7 @@ const InventoryScreen: React.FC = () => {
     count: number;
     lotNumber?: string;
   } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const width = Dimensions.get('window').width;
   const modalWidth = width * 0.8; // Modal scales proportionally
 
@@ -128,7 +130,8 @@ const InventoryScreen: React.FC = () => {
         });
       }
 
-      setLatestInventory(runningCount);
+      const currentInventory = await getCurrentInventoryFirestore(FRIDGE_ID);
+      setLatestInventory(currentInventory);
       setInventoryData(
         history.length > 0
           ? history
@@ -199,6 +202,9 @@ const InventoryScreen: React.FC = () => {
   const confirmSubmission = async () => {
     if (!pendingAction) return;
 
+    if (isSubmitting) return; // Prevent multiple calls
+    setIsSubmitting(true);
+
     const { action, count, lotNumber } = pendingAction;
     const timestampISO = new Date().toISOString();
 
@@ -216,10 +222,11 @@ const InventoryScreen: React.FC = () => {
       await fetchInventory();
     } catch (err) {
       console.error('Failed to submit inventory change:', err);
+    } finally {
+      setIsSubmitting(false);
+      setShowConfirm(false);
+      setPendingAction(null);
     }
-
-    setShowConfirm(false);
-    setPendingAction(null);
   };
 
   /* -------------------------------------------------------------------------- */

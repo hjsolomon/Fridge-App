@@ -21,6 +21,8 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
   // Local state for chart labels (timestamps) and data values (counts)
   const [labels, setLabels] = useState<string[]>([]);
   const [inventory, setInventory] = useState<number[]>([]);
+  const height = Dimensions.get('window').height;
+    const metricFontMedium = Math.max(10, Math.round(height * 0.02));
 
   // Extract timestamps and counts from incoming data
   useEffect(() => {
@@ -48,7 +50,7 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
       }}
     >
       {/* Section title */}
-      <Text color="white" fontSize="$2xl" fontWeight="$normal">
+      <Text color="white" fontSize="$xl" fontWeight="$normal" mb="$1">
         Inventory Over Time
       </Text>
 
@@ -72,12 +74,20 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
                 data: inventory.slice(-20), // Show last 20 data points
                 color: () => `rgba(255, 255, 255, 0.63)`, // <-- ONLY affects stroke
               },
+              // Invisible dummy dataset to force y-axis max of 600
+              {
+                data: [600],
+                color: () => `rgba(0, 0, 0, 0)`, // Fully transparent (invisible)
+                strokeWidth: 0, // Ensure no stroke
+              },
             ], 
           }}
           width={Dimensions.get('window').width - 40} // Responsive width
           height={Dimensions.get('window').height * 0.28}
           yAxisLabel=""
           yAxisSuffix=""
+          fromZero={true}
+          segments={6} // Divide y-axis into 6 segments (0-100, 100-200, etc., up to 600)
           yAxisInterval={1}
           chartConfig={{
             backgroundColor: '#282828ff',
@@ -96,6 +106,8 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
           bezier
           style={{
             marginVertical: 8,
+            marginRight: 20,
+            marginLeft: -10,
             borderRadius: 16,
           }}
         />

@@ -34,9 +34,9 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   const dividerMarginBottom = Math.round(height * 0.02);
 
   const modalWidth = width * 0.88;
-  const modalTitleFontSize = Math.max(18, Math.round(height * 0.04));
-  const modalBodyFontSize = Math.max(14, Math.round(height * 0.024));
-  const modalSmallFontSize = Math.max(11, Math.round(height * 0.018));
+  const modalTitleFontSize = Math.max(18, Math.round(height * 0.03));
+  const modalBodyFontSize = Math.max(14, Math.round(height * 0.02));
+  const modalSmallFontSize = Math.max(11, Math.round(height * 0.014));
 
   return (
     <>
