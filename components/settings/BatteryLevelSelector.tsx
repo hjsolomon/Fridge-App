@@ -65,10 +65,9 @@ const BatteryLevelSelector: React.FC<BatteryLevelSelectorProps> = ({
           </AccordionTrigger>
         </AccordionHeader>
 
-        <AccordionContent>
+        <AccordionContent alignItems='center'>
           <AccordionContentText color="white" fontSize="$md" pb="$4" mb="$7">
-            Here you can set the minimum battery level (in %) at which you would
-            like to receive notifications.
+            Here you can set the minimum battery level at which you would like to receive notifications.
           </AccordionContentText>
           <MultiSlider
             values={[batteryLevel]}

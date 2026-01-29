@@ -15,11 +15,12 @@ const SettingsScreen: React.FC = () => {
     <Box flex={1} p="$4">
       <ScreenHeader
         title="Settings"
-        infoText="The Settings screen allows you to customize app preferences..."
+        infoText="The Settings screen allows you to customize notification preferences regarding temperature ranges, battery levels, inventory minimums, and grid connectivity."
       />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
+        backgroundColor='transparent'
       >
         <Text color="white" mb="$4">Notification Preferences</Text>
 
@@ -29,14 +30,14 @@ const SettingsScreen: React.FC = () => {
           rounded="$2xl"
           py="$5"
           mb="$6"
-          style={{
-            paddingTop: 20,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-            elevation: 20,
-          }}
+          // style={{
+          //   paddingTop: 20,
+          //   shadowColor: '#000',
+          //   shadowOffset: { width: 0, height: 4 },
+          //   shadowOpacity: 0.25,
+          //   shadowRadius: 4,
+          //   elevation: 20,
+          // }}
         >
           <TempRangeSelector />
           <Box mt="$1" height={1} width="90%" bg="#FFFFFF" opacity={0.2} alignSelf="center" mb={16} />

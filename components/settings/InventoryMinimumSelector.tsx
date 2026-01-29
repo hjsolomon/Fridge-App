@@ -65,7 +65,7 @@ const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
           </AccordionTrigger>
         </AccordionHeader>
 
-        <AccordionContent>
+        <AccordionContent alignItems='center'>
           <AccordionContentText color="white" fontSize="$md" pb="$4" mb="$7">
             Here you can set the minimum inventory level at which you would
             like to receive notifications.

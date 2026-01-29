@@ -72,10 +72,9 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
           </AccordionTrigger>
         </AccordionHeader>
 
-        <AccordionContent>
+        <AccordionContent alignItems='center'>
           <AccordionContentText color="white" fontSize="$md" pb="$4" mb="$7">
-            Here you can set your preferred temperature range for the
-            refrigerator.
+            Here you can set your preferred temperature range for the fridge. Notifications will be sent if the temperature goes outside this range.
           </AccordionContentText>
           <MultiSlider
             values={[0, 8]}

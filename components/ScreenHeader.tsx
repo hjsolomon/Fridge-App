@@ -30,7 +30,9 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
 
 
   const titleFontSize = Math.max(20, Math.round(height * 0.035));
-  const headerMarginY = Math.round(height * 0.008);
+  const headerMarginT = Math.round(height * 0.015);
+  const headerMarginB = Math.round(height * 0.008);
+
   const dividerMarginBottom = Math.round(height * 0.02);
 
   const modalWidth = width * 0.88;
@@ -46,7 +48,8 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         flexDirection="row"
         alignItems="center"
         justifyContent="space-between"
-        my={headerMarginY}
+        mt={headerMarginT}
+        mb={headerMarginB}
       >
         <Text
           color="white"
