@@ -8,6 +8,38 @@ export function useBluetooth() {
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
 
   useEffect(() => {
+    if (!connectedDevice) return;
+
+    const checkConnection = async () => {
+      try {
+        const isConnected = await connectedDevice.isConnected();
+        if (!isConnected) {
+          console.warn('Device disconnected');
+          setConnectedDevice(null);
+        }
+      } catch (error) {
+        console.warn('Error checking connection:', error);
+        setConnectedDevice(null);
+      }
+    };
+
+    const interval = setInterval(checkConnection, 2000);
+
+    return () => clearInterval(interval);
+  }, [connectedDevice]);
+
+  useEffect(() => {
+    if (!connectedDevice) return;
+
+    const subscription = connectedDevice.onDisconnected(() => {
+      console.warn('Device disconnection event received');
+      setConnectedDevice(null);
+    });
+
+    return () => subscription.remove();
+  }, [connectedDevice]);
+
+  useEffect(() => {
     return () => {
       bleManager.stopDeviceScan();
     };
@@ -49,11 +81,43 @@ export function useBluetooth() {
     }
   };
 
+  const subscribeToCharacteristic = async (
+    serviceUUID: string,
+    characteristicUUID: string
+  ) => {
+    if (!connectedDevice) {
+      console.warn('No connected device');
+      return;
+    }
+
+    try {
+      const subscription = connectedDevice.monitorCharacteristicForService(
+        serviceUUID,
+        characteristicUUID,
+        (error, characteristic) => {
+          if (error) {
+            console.warn('Subscription error:', error);
+            return;
+          }
+
+          if (characteristic?.value) {
+            console.log('Characteristic updated:', characteristic.value);
+          }
+        }
+      );
+
+      return subscription;
+    } catch (error) {
+      console.warn('Failed to subscribe:', error);
+    }
+  };
+
   return {
     devices,
     scanning,
     connectedDevice,
     scan,
     connect,
+    subscribeToCharacteristic,
   };
 }

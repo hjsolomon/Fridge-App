@@ -1,5 +1,10 @@
 import { useEffect, useState } from 'react';
-import { PermissionsAndroid, Linking } from 'react-native';
+import {
+  PermissionsAndroid,
+  Linking,
+  AppState,
+  AppStateStatus,
+} from 'react-native';
 
 type THook = {
   waiting: boolean;
@@ -19,16 +24,14 @@ const PERMISSIONS_REQUEST = [
   PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
 ];
 
-const isAllGranted = (res: PermissionsAndroidResponse) => {
-  return PERMISSIONS_REQUEST.every(permission => {
-    return res[permission] === PermissionsAndroid.RESULTS.GRANTED;
-  });
-};
 
 const hasAnyDenied = (res: PermissionsAndroidResponse) => {
-  return PERMISSIONS_REQUEST.some(permission => {
-    return res[permission] === PermissionsAndroid.RESULTS.DENIED;
-  });
+  for (let i = 0; i < PERMISSIONS_REQUEST.length; i++) {
+    if (res[PERMISSIONS_REQUEST[i]] === PermissionsAndroid.RESULTS.DENIED) {
+      return true;
+    }
+  }
+  return false;
 };
 
 export const useAndroidPermissions = (): THook => {
@@ -36,17 +39,48 @@ export const useAndroidPermissions = (): THook => {
   const [waiting, setWaiting] = useState(false);
   const [shouldOpenSettings, setShouldOpenSettings] = useState(false);
 
+  const checkPermissions = async () => {
+    const bluetoothGranted = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+    );
+
+    const locationGranted = await PermissionsAndroid.check(
+      PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+    );
+
+    if (locationGranted && bluetoothGranted) {
+      setGranted(true);
+    } else {
+      setGranted(false);
+    }
+  };
+
   const openSettings = () => {
     Linking.openSettings();
   };
+
+  useEffect(() => {
+    checkPermissions();
+
+    const subscription = AppState.addEventListener(
+      'change',
+      (state: AppStateStatus) => {
+        if (state === 'active') {
+          checkPermissions();
+        }
+      },
+    );
+
+    return () => subscription.remove();
+  }, []);
 
   const requestPermissions = async () => {
     setWaiting(true);
     try {
       const res = await PermissionsAndroid.requestMultiple(PERMISSIONS_REQUEST);
-      const allGranted = isAllGranted(res);
+      const allGranted = !hasAnyDenied(res);
       setGranted(allGranted);
-      
+
       // If not all granted and no dialog was shown (user denied with "don't ask again")
       if (!allGranted && !hasAnyDenied(res)) {
         setShouldOpenSettings(true);
@@ -62,5 +96,11 @@ export const useAndroidPermissions = (): THook => {
     }
   };
 
-  return { waiting, granted, shouldOpenSettings, requestPermissions, openSettings };
+  return {
+    waiting,
+    granted,
+    shouldOpenSettings,
+    requestPermissions,
+    openSettings,
+  };
 };
