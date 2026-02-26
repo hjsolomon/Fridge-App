@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Device } from 'react-native-ble-plx';
 import { bleManager } from './bleManager';
+import { Buffer } from 'buffer';
 
 export function useBluetooth() {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -58,7 +59,7 @@ export function useBluetooth() {
 
       if (device?.name) {
         setDevices(prev =>
-          prev.some(d => d.id === device.id) ? prev : [...prev, device]
+          prev.some(d => d.id === device.id) ? prev : [...prev, device],
         );
       }
     });
@@ -83,7 +84,8 @@ export function useBluetooth() {
 
   const subscribeToCharacteristic = async (
     serviceUUID: string,
-    characteristicUUID: string
+    characteristicUUID: string,
+    onUpdate?: (value: string) => void,
   ) => {
     if (!connectedDevice) {
       console.warn('No connected device');
@@ -100,10 +102,14 @@ export function useBluetooth() {
             return;
           }
 
-          if (characteristic?.value) {
-            console.log('Characteristic updated:', characteristic.value);
+          if (!characteristic?.value) {
+            return;
           }
-        }
+          const decodedValue = Buffer.from(characteristic.value, 'base64').toString('utf-8');
+          if (onUpdate) {
+            onUpdate(decodedValue);
+          }
+        },
       );
 
       return subscription;

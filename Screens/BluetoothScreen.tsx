@@ -29,11 +29,13 @@ const BluetoothScreen: React.FC = () => {
       const tempSubscription = await subscribeToCharacteristic(
         SERVICE_UUID,
         TEMP_CHARACTERISTIC_UUID,
+        (value) => setTempCharacteristicData(value),
       );
 
       const vaccineSubscription = await subscribeToCharacteristic(
         SERVICE_UUID,
         VACCINE_CHARACTERISTIC_UUID,
+        (value) => setVaccineCharacteristicData(value),
       );
 
       return { temp: tempSubscription, vaccine: vaccineSubscription };
