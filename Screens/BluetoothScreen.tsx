@@ -7,7 +7,7 @@ import { useAndroidPermissions } from './../utils/useAndroidPermissions';
 import { Dimensions } from 'react-native';
 
 const BluetoothScreen: React.FC = () => {
-  const { devices, scanning, scan, connect, connectedDevice, subscribeToCharacteristic } = useBluetooth();
+  const { devices, scanning, fridgeDevices, scan, connect, connectedDevice, subscribeToCharacteristic } = useBluetooth();
   const { width } = Dimensions.get('window');
   const buttonWidth = width * 0.9;
 
@@ -21,35 +21,56 @@ const BluetoothScreen: React.FC = () => {
       setVaccineCharacteristicData(null);
       return;
     }
+
+    let isMounted = true;
+    let subscriptions: Array<any> = [];
+
     const setupSubscription = async () => {
-      const SERVICE_UUID = '6a8da328-7627-43a6-a5b4-a4cfb5fd139c'; 
-      const TEMP_CHARACTERISTIC_UUID = '96ac696e-aba0-467f-8fd9-910a55394e54'; 
-      const VACCINE_CHARACTERISTIC_UUID = 'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
+      try {
+        const SERVICE_UUID = '6a8da328-7627-43a6-a5b4-a4cfb5fd139c'; 
+        const TEMP_CHARACTERISTIC_UUID = '96ac696e-aba0-467f-8fd9-910a55394e54'; 
+        const VACCINE_CHARACTERISTIC_UUID = 'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
 
-      const tempSubscription = await subscribeToCharacteristic(
-        SERVICE_UUID,
-        TEMP_CHARACTERISTIC_UUID,
-        (value) => setTempCharacteristicData(value),
-      );
+        const tempSubscription = await subscribeToCharacteristic(
+          SERVICE_UUID,
+          TEMP_CHARACTERISTIC_UUID,
+          (value) => {
+            if (isMounted) setTempCharacteristicData(value);
+          },
+        );
 
-      const vaccineSubscription = await subscribeToCharacteristic(
-        SERVICE_UUID,
-        VACCINE_CHARACTERISTIC_UUID,
-        (value) => setVaccineCharacteristicData(value),
-      );
+        if (tempSubscription && isMounted) {
+          subscriptions.push(tempSubscription);
+        }
 
-      return { temp: tempSubscription, vaccine: vaccineSubscription };
+        const vaccineSubscription = await subscribeToCharacteristic(
+          SERVICE_UUID,
+          VACCINE_CHARACTERISTIC_UUID,
+          (value) => {
+            if (isMounted) setVaccineCharacteristicData(value);
+          },
+        );
+
+        if (vaccineSubscription && isMounted) {
+          subscriptions.push(vaccineSubscription);
+        }
+      } catch (error) {
+        console.error('Failed to setup subscriptions:', error);
+      }
     };
 
-    const subscription = setupSubscription();
+    setupSubscription();
 
     return () => {
-      subscription.then(sub => {
-        if (sub) {
-          sub.temp?.remove();
-          sub.vaccine?.remove();
+      isMounted = false;
+      subscriptions.forEach(sub => {
+        try {
+          sub?.remove?.();
+        } catch (error) {
+          console.error('Error removing subscription:', error);
         }
       });
+      subscriptions = [];
     };
   }, [connectedDevice, subscribeToCharacteristic]);
 
@@ -145,7 +166,7 @@ const BluetoothScreen: React.FC = () => {
         mb="$6"
       >
         <FlatList
-          data={devices}
+          data={fridgeDevices}
           keyExtractor={item => item.id}
           renderItem={({ item }) => {
             const isConnected = connectedDevice?.id === item.id;

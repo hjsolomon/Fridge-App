@@ -1,6 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
       android:name=".MainApplication"
@@ -24,4 +25,17 @@
         </intent-filter>
       </activity>
     </application>
+
+    <!-- Android 12+ Bluetooth permissions -->
+    <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+    <!-- optional, depending on your target SDK / use case -->
+    <uses-permission android:name="android.permission.BLUETOOTH_ADVERTISE" />
+
+    <!-- if you want to make them “not required” on older devices: -->
+    <!--
+    <uses-permission
+        android:name="android.permission.BLUETOOTH_CONNECT"
+        android:required="false" />
+    -->
 </manifest>
