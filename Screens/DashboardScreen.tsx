@@ -1,3 +1,16 @@
+/**
+ * DashboardScreen
+ * ================
+ * Displays temperature analytics and insights.
+ *
+ * Features:
+ * - Historical temperature graph from database
+ * - Current temperature display
+ * - Time elapsed since last sensor update
+ * - Auto-refresh every 5 seconds
+ * - Responsive typography sizing
+ */
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
@@ -11,11 +24,25 @@ import { v4 as uuidv4 } from 'uuid';
 
 const FRIDGE_ID = 'fridge_1';
 
+/* -------------------------------------------------------------------------- */
+/*                             Type Definitions                               */
+/* -------------------------------------------------------------------------- */
+
 interface TempData {
-  timestamp: string;
-  value: number;
+  timestamp: string;  // Formatted MM/DD HH:MM
+  value: number;      // Temperature in Celsius
 }
 
+/* -------------------------------------------------------------------------- */
+/*                              Helper Functions                              */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * formatToMonthDay()
+ * -------------------
+ * Converts ISO timestamp to "MM/DD HH:MM" format.
+ * Used for graph labels.
+ */
 const formatToMonthDay = (isoString: string) => {
   const date = new Date(isoString);
 
@@ -25,21 +52,35 @@ const formatToMonthDay = (isoString: string) => {
   let hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, '0');
 
-
   return `${month}/${day} ${hours}:${minutes}`;
-
 };
 
+/* -------------------------------------------------------------------------- */
+/*                         Component Definition                                */
+/* -------------------------------------------------------------------------- */
 
 const DashboardScreen: React.FC = () => {
+  /* -------------------------------------------------------------------- */
+  /*                        State Management                               */
+  /* -------------------------------------------------------------------- */
+
+  // Historical temperature data for graph
   const [tempData, setTempData] = useState<TempData[]>([]);
+
+  // Latest temperature reading
   const [latestTemp, setLatestTemp] = useState<number>(0);
+
+  // Human-readable time since last update (e.g., "5 minutes ago")
   const [timeSinceUpdate, setTimeSinceUpdate] = useState<string>('Calculating...');
+
+  /* -------------------------------------------------------------------- */
+  /*                        Responsive Sizing                              */
+  /* -------------------------------------------------------------------- */
 
   const { height } = Dimensions.get('window');
   const base = height;
 
-  // Text sizes
+  // Typography sizing
   const metricFontLarge = Math.max(20, Math.round(base * 0.038));
   const metricFontMedium = Math.max(10, Math.round(base * 0.02));
 
@@ -51,10 +92,22 @@ const DashboardScreen: React.FC = () => {
   // Screen padding
   const screenPadding = Math.round(base * 0.02);
 
-  /* ------------------------------------------------------------------------ */
-  /*                         Fetch Temperature Data                           */
-  /* ------------------------------------------------------------------------ */
+  /* -------------------------------------------------------------------- */
+  /*                    Fetch & Process Temperature Data                   */
+  /* -------------------------------------------------------------------- */
 
+  /**
+   * fetchTemperatureData()
+   * ----------------------
+   * Fetches latest reading and historical data.
+   *
+   * Steps:
+   * 1. Get most recent sensor reading
+   * 2. Calculate time elapsed since update
+   * 3. Fetch all historical readings
+   * 4. Sort chronologically and format for graph
+   * 5. Update state
+   */
   const fetchTemperatureData = useCallback(async () => {
     try {
       // Most recent reading
@@ -63,6 +116,7 @@ const DashboardScreen: React.FC = () => {
       if (latestReading) {
         setLatestTemp(latestReading.temperature);
 
+        // Calculate time elapsed
         const last = new Date(latestReading.timestamp);
         const diffMs = Date.now() - last.getTime();
         const diffMins = Math.floor(diffMs / 60000);
@@ -75,7 +129,7 @@ const DashboardScreen: React.FC = () => {
         );
       }
 
-      // Historic readings  
+      // Historic readings
       const all = await getAllReadings(FRIDGE_ID);
 
       const sorted = all.sort(
@@ -102,15 +156,23 @@ const DashboardScreen: React.FC = () => {
     }
   }, []);
 
+  /* -------------------------------------------------------------------- */
+  /*                    Auto-fetch on Mount & Interval                     */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * Fetch temperature data on mount and set 5-second refresh interval.
+   * Cleanup interval on unmount.
+   */
   useEffect(() => {
     fetchTemperatureData();
     const interval = setInterval(() => fetchTemperatureData(), 5000);
     return () => clearInterval(interval);
   }, [fetchTemperatureData]);
 
-  /* ------------------------------------------------------------------------ */
-  /*                               UI Rendering                               */
-  /* ------------------------------------------------------------------------ */
+  /* -------------------------------------------------------------------- */
+  /*                              UI Rendering                             */
+  /* -------------------------------------------------------------------- */
 
   return (
     <Box flex={1} style={{ padding: screenPadding }}>

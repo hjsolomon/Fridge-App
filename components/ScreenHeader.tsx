@@ -1,3 +1,16 @@
+/**
+ * ScreenHeader
+ * =============
+ * Reusable header component for screens with optional info popup.
+ *
+ * Features:
+ * - Responsive typography scaling
+ * - Title text with info icon button
+ * - Decorative divider line
+ * - Modal popup for detailed information
+ * - Safe area considerations for screen layout
+ */
+
 import React, { useState } from 'react';
 import {
   Box,
@@ -15,34 +28,57 @@ import {
 import { CircleHelp, X } from 'lucide-react-native';
 import { Dimensions } from 'react-native';
 
+/* -------------------------------------------------------------------------- */
+/*                             Type Definitions                               */
+/* -------------------------------------------------------------------------- */
+
 interface ScreenHeaderProps {
-  title: string;
-  infoText?: string;
+  title: string;              // Main heading text
+  infoText?: string;          // Optional detailed info shown in modal
 }
+
+/* -------------------------------------------------------------------------- */
+/*                             Component Definition                            */
+/* -------------------------------------------------------------------------- */
 
 export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   title,
   infoText,
 }) => {
+  /* -------------------------------------------------------------------- */
+  /*                        State Management                               */
+  /* -------------------------------------------------------------------- */
+
+  // Controls visibility of info modal
   const [showInfo, setShowInfo] = useState(false);
+
+  /* -------------------------------------------------------------------- */
+  /*                        Responsive Sizing                              */
+  /* -------------------------------------------------------------------- */
 
   const { width, height } = Dimensions.get('window');
 
-
+  // Header typography sizing
   const titleFontSize = Math.max(20, Math.round(height * 0.035));
-  const headerMarginT = Math.round(height * 0.015);
-  const headerMarginB = Math.round(height * 0.008);
+  const headerMarginT = Math.round(height * 0.015);  // Top margin
+  const headerMarginB = Math.round(height * 0.008);  // Bottom margin
 
+  // Divider sizing
   const dividerMarginBottom = Math.round(height * 0.02);
 
+  // Modal sizing and typography
   const modalWidth = width * 0.88;
   const modalTitleFontSize = Math.max(18, Math.round(height * 0.03));
   const modalBodyFontSize = Math.max(14, Math.round(height * 0.02));
   const modalSmallFontSize = Math.max(11, Math.round(height * 0.014));
 
+  /* -------------------------------------------------------------------- */
+  /*                              UI Rendering                             */
+  /* -------------------------------------------------------------------- */
+
   return (
     <>
-      {/* Header Section */}
+      {/* Header Section: Title + Info Button */}
       <Box
         width="100%"
         flexDirection="row"
@@ -61,6 +97,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
           {title}
         </Text>
 
+        {/* Info button opens modal */}
         <Button
           size="sm"
           variant="link"
@@ -71,7 +108,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         </Button>
       </Box>
 
-      {/* Divider */}
+      {/* Visual Divider */}
       <Box
         mt="$1"
         height={1}
@@ -81,7 +118,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         mb={dividerMarginBottom}
       />
 
-      {/* Modal */}
+      {/* Info Modal: Shows detailed description */}
       <Modal isOpen={showInfo} onClose={() => setShowInfo(false)}>
         <ModalBackdrop />
 
@@ -92,6 +129,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
             alignSelf: 'center',
           }}
         >
+          {/* Modal Header with Title and Close Button */}
           <ModalHeader>
             <Text
               color="white"
@@ -103,6 +141,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
               {title} — Info
             </Text>
 
+            {/* Close button (X icon) */}
             <ModalCloseButton
               position="absolute"
               top="$3"
@@ -113,6 +152,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
             </ModalCloseButton>
           </ModalHeader>
 
+          {/* Modal Body: Information Text */}
           <ModalBody>
             <Text
               color="white"
@@ -125,6 +165,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
                 'This screen provides information related to the refrigerator system.'}
             </Text>
 
+            {/* Dismissal hint text */}
             <Text
               color="white"
               style={{
@@ -140,6 +181,6 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       </Modal>
     </>
   );
-};
+};;
 
 export default ScreenHeader;
