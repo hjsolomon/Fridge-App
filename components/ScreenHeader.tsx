@@ -76,8 +76,8 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
         mt="$1"
         height={1}
         width="100%"
-        bg="#FFFFFF"
-        opacity={0.3}
+        bg="#ffffff"
+        opacity={0.7}
         mb={dividerMarginBottom}
       />
 

@@ -1,34 +1,62 @@
+/**
+ * BatteryBar
+ * ===========
+ * Displays a stylized battery level indicator with a responsive gradient fill.
+ *
+ * Features:
+ * - Responsive sizing based on screen width
+ * - Dynamic gradient colors based on charge level:
+ *   - Green (>50%): Optimal charge
+ *   - Yellow (20-50%): Low battery warning
+ *   - Red (<20%): Critical battery alert
+ * - Minimum visible fill for visual clarity
+ * - Shadow/elevation effects for depth
+ * - Battery tip (connector) visual element
+ */
+
 import React from 'react';
 import { Box, Text, HStack } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
-/**
- * BatteryBar
- * -----------
- * Displays a stylized battery level indicator with a gradient fill.
- *
- * - Green gradient when > 50%
- * - Yellow gradient between 20–50%
- * - Red gradient when < 20%
- */
+/* -------------------------------------------------------------------------- */
+/*                             Component Definition                            */
+/* -------------------------------------------------------------------------- */
+
+interface BatteryBarProps {
+  level: number; // Battery percentage (0-100)
+}
 
 const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
   const { width } = Dimensions.get('window');
 
-  const barWidth = width * 0.85;
-  const barHeight = width * 0.2;
-  const tipWidth = barWidth * 0.04;
-  const tipHeight = barHeight * 0.6;
+  /* -------------------------------------------------------------------- */
+  /*                          Responsive Sizing                            */
+  /* -------------------------------------------------------------------- */
 
-  // Define gradient color sets
+  // Calculate dimensions based on screen width for responsive layout
+  const barWidth = width * 0.85;        // Main battery bar width
+  const barHeight = width * 0.2;        // Battery bar height
+  const tipWidth = barWidth * 0.04;     // Battery connector width
+  const tipHeight = barHeight * 0.6;    // Battery connector height
+
+  /* -------------------------------------------------------------------- */
+  /*                        Color & Level Logic                            */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * getGradientColors()
+   * -------------------
+   * Returns gradient color pair based on current battery level.
+   * Color indicates urgency and charge status.
+   */
   const getGradientColors = () => {
-    if (level > 50) return ['#65b760ff', '#3ca14a']; 
-    if (level > 20) return ['#E2C044', '#d99d36ff']; 
-    return ['#d43737ff', '#b22f21ff']; 
+    if (level > 50) return ['#65b760ff', '#3ca14a'];      // Green: Good
+    if (level > 20) return ['#E2C044', '#d99d36ff'];      // Yellow: Warning
+    return ['#d43737ff', '#b22f21ff'];                     // Red: Critical
   };
 
-  // Keep a minimum fill visible
+  // Maintain minimum visible fill width (40%) for clarity at low levels
   const minFillPercent = 40;
   const adjustedLevel = Math.max(level, minFillPercent);
 

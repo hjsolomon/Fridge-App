@@ -105,7 +105,6 @@ const InventoryScreen: React.FC = () => {
    *  3. Sorting logs chronologically
    *  4. Replaying all add/remove events to rebuild historical counts
    *
-   * Ensures the graph and summary numbers always stay in sync.
    */
   const fetchInventory = useCallback(async () => {
     try {

@@ -1,13 +1,36 @@
+/**
+ * PowerSourceIcon
+ * ================
+ * Displays a visual indicator for the fridge's power source (battery, grid, etc.).
+ *
+ * Features:
+ * - Responsive container sizing based on screen dimensions
+ * - Icon color changes based on active/inactive state
+ * - Dynamic gradient background:
+ *   - Green gradient when active (power available)
+ *   - Gray gradient when inactive (no power)
+ * - Icon with label below for clear labeling
+ * - Shadow effects for visual depth
+ */
+
 import React from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 
+/* -------------------------------------------------------------------------- */
+/*                             Type Definitions                               */
+/* -------------------------------------------------------------------------- */
+
 interface SourceIconProps {
-  icon: React.ReactNode;
-  label: string;
-  active?: boolean;
+  icon: React.ReactNode;              // Icon component to display
+  label: string;                      // Text label below icon
+  active?: boolean;                   // Whether source is currently active
 }
+
+/* -------------------------------------------------------------------------- */
+/*                             Component Definition                            */
+/* -------------------------------------------------------------------------- */
 
 const PowerSourceIcon: React.FC<SourceIconProps> = ({
   icon,
@@ -16,13 +39,26 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
 }) => {
   const { width, height } = Dimensions.get('window');
 
-  const containerWidth = Math.min(width * 0.27, 120);
-  const containerHeight = Math.min(height * 0.075, 100);
-  const borderRadius = Math.round(Math.min(containerWidth, containerHeight) / 2);
-  const iconSize = Math.round(containerHeight * 0.6);
-  const labelFontSize = Math.max(12, Math.round(containerHeight * 0.28));
+  /* -------------------------------------------------------------------- */
+  /*                          Responsive Sizing                            */
+  /* -------------------------------------------------------------------- */
 
-  // Make icon lighter/darker depending on active state
+  // All dimensions scale fluidly with device screen size
+  const containerWidth = Math.min(width * 0.27, 120);      // Max width: 120px
+  const containerHeight = Math.min(height * 0.075, 100);   // Max height: 100px
+  const borderRadius = Math.round(Math.min(containerWidth, containerHeight) / 2);
+  const iconSize = Math.round(containerHeight * 0.6);      // Icon is 60% of container height
+  const labelFontSize = Math.max(12, Math.round(containerHeight * 0.28));  // Min 12px
+
+  /* -------------------------------------------------------------------- */
+  /*                        Icon & Color Styling                           */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * Clone icon and apply color/size based on active state.
+   * Active: White icon for clarity
+   * Inactive: Gray icon to show disabled state
+   */
   let renderedIcon = icon;
   if (React.isValidElement(icon)) {
     renderedIcon = React.cloneElement(icon, {
@@ -31,14 +67,20 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
     } as any);
   }
 
-  // Define gradient colors based on the base color
+  /**
+   * getGradientColors()
+   * -------------------
+   * Returns gradient colors based on power source active state.
+   * Active: Green gradient for operational status
+   * Inactive: Gray gradient for disabled/unavailable status
+   */
   const gradientColors = active
-    ? ['#6ebb6aff', '#3ca14a'] 
-    : ['#8c8c8cff', '#6c6c6cff']; 
+    ? ['#6ebb6aff', '#3ca14a']      // Green: Active/available
+    : ['#8c8c8cff', '#6c6c6cff'];   // Gray: Inactive/unavailable
 
   return (
     <Box alignItems="center" mx="$0.5">
-      {/* Gradient container */}
+      {/* Gradient container with icon */}
       <LinearGradient
         colors={gradientColors}
         start={{ x: 0, y: 0 }}
@@ -59,7 +101,7 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
         {renderedIcon}
       </LinearGradient>
 
-      {/* Icon label */}
+      {/* Label text below icon */}
       <Text
         style={{ marginTop: 3, fontSize: labelFontSize }}
         color={active ? 'white' : '#cacacaff'}

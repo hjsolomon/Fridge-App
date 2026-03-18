@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Button, ButtonIcon } from '@gluestack-ui/themed';
+import { View, Button, ButtonIcon, Text } from '@gluestack-ui/themed';
 import {
   Home,
   Bluetooth,
@@ -74,7 +74,7 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
               borderRadius="$full"
               justifyContent="center"
               alignItems="center"
-              bg={isFocused ? '#3a783eff' : 'transparent'}
+              bg={'transparent'}
               onPress={() => {
                 if (!isFocused) navigation.navigate(route.name);
               }}
@@ -92,6 +92,8 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
                   style={{ width: iconSize, height: iconSize }}
                   color={isFocused ? '#FFFFFF' : '#cdcdcdff'}
                 />
+
+                
               </MotiView>
             </Button>
           );

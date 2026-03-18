@@ -1,15 +1,48 @@
+/**
+ * useBluetooth
+ * ============
+ * Custom hook for managing Bluetooth Low Energy (BLE) device scanning,
+ * connection, and characteristic subscription.
+ *
+ * Features:
+ * - Device scanning with filtering for fridge devices
+ * - Persistent connection management
+ * - Automatic disconnection detection
+ * - Characteristic subscription with decoding (int32 / UTF-8)
+ * - Cleanup on unmount
+ */
+
 import { useEffect, useState, useCallback } from 'react';
 import { Device } from 'react-native-ble-plx';
 import { bleManager } from './bleManager';
 import { Buffer } from 'buffer';
 
+/* -------------------------------------------------------------------------- */
+/*                                  State Management                            */
+/* -------------------------------------------------------------------------- */
+
 export function useBluetooth() {
+  // All discovered devices during scan
   const [devices, setDevices] = useState<Device[]>([]);
+
+  // Filtered devices containing 'fridge' in their name
   const [fridgeDevices, setFridgeDevices] = useState<Device[]>([]);
+
+  // Whether a scan is currently in progress
   const [scanning, setScanning] = useState(false);
+
+  // Currently connected device (null if disconnected)
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
 
 
+  /* -------------------------------------------------------------------- */
+  /*                        Connection Lifecycle Management                 */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * Listens for device disconnection events and updates state.
+   * Automatically cleans up subscription on unmount or device change.
+   */
   useEffect(() => {
     if (!connectedDevice) return;
 
@@ -21,12 +54,32 @@ export function useBluetooth() {
     return () => subscription.remove();
   }, [connectedDevice]);
 
+  /**
+   * Cleanup on unmount: stops any active device scan.
+   * Prevents memory leaks and unnecessary BLE radio activity.
+   */
   useEffect(() => {
     return () => {
       bleManager.stopDeviceScan();
     };
   }, []);
 
+  /* -------------------------------------------------------------------- */
+  /*                           Device Scanning                              */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * scan()
+   * ------
+   * Initiates a 10-second BLE device scan.
+   *
+   * Behavior:
+   * - Clears previous device lists
+   * - Starts scanning and deduplicates by device ID
+   * - Filters devices with 'fridge' in name into separate list
+   * - Auto-stops scan after 10 seconds
+   * - Updates scanning state accordingly
+   */
   const scan = () => {
     setDevices([]);
     setFridgeDevices([]);
@@ -39,12 +92,14 @@ export function useBluetooth() {
         return;
       }
 
+      // Add any named device to general devices list (avoid duplicates)
       if (device?.name) {
         setDevices(prev =>
           prev.some(d => d.id === device.id) ? prev : [...prev, device],
         );
       }
 
+      // Also add to fridge-specific list if name contains 'fridge'
       if (device?.name?.toLowerCase().includes('fridge')) {
         setFridgeDevices(prev =>
           prev.some(d => d.id === device.id) ? prev : [...prev, device],
@@ -52,12 +107,30 @@ export function useBluetooth() {
       }
     });
 
+    // Stop scan after 10 seconds
     setTimeout(() => {
       bleManager.stopDeviceScan();
       setScanning(false);
     }, 10000);
   };
 
+  /* -------------------------------------------------------------------- */
+  /*                      Device Connection & Discovery                    */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * connect(device)
+   * ----------------
+   * Connects to a BLE device and discovers all services/characteristics.
+   *
+   * Steps:
+   * 1. Establish connection to device
+   * 2. Discover all available services and characteristics
+   * 3. Update state to mark device as connected
+   * 4. Return connected device for use
+   *
+   * Throws: Error if connection or discovery fails
+   */
   const connect = async (device: Device) => {
     try {
       const connected = await device.connect();
@@ -70,6 +143,27 @@ export function useBluetooth() {
     }
   };
 
+  /* -------------------------------------------------------------------- */
+  /*                    Characteristic Subscription & Decoding              */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * subscribeToCharacteristic()
+   * ----------------------------
+   * Subscribes to a BLE characteristic and decodes incoming values.
+   *
+   * Parameters:
+   * - serviceUUID: UUID of the service containing the characteristic
+   * - characteristicUUID: UUID of the characteristic to monitor
+   * - onUpdate: Callback invoked with decoded value (as string)
+   *
+   * Decoding Logic:
+   * - 4-byte values: Interpreted as signed 32-bit little-endian integer
+   * - Other sizes: Decoded as UTF-8 string
+   *
+   * Returns: Subscription object for cleanup, or null if subscription fails
+   * Requires: A connected device to be present
+   */
   const subscribeToCharacteristic = useCallback(async (
     serviceUUID: string,
     characteristicUUID: string,
@@ -95,10 +189,13 @@ export function useBluetooth() {
           try {
             const decodedValue = Buffer.from(characteristic.value, 'base64');
 
+            // Decode based on payload size
             let value: string | number;
             if (decodedValue.length === 4) {
+              // 4 bytes → signed 32-bit integer
               value = decodedValue.readInt32LE(0);
             } else {
+              // Otherwise → UTF-8 string
               value = decodedValue.toString('utf8');
             }
             onUpdate?.(String(value));
@@ -117,13 +214,20 @@ export function useBluetooth() {
     }
   }, [connectedDevice]);
 
+  /* -------------------------------------------------------------------- */
+  /*                            Hook API Return Value                       */
+  /* -------------------------------------------------------------------- */
+
   return {
-    devices,
-    fridgeDevices,
-    scanning,
-    connectedDevice,
-    scan,
-    connect,
-    subscribeToCharacteristic,
+    // State
+    devices,                        // All discovered devices
+    fridgeDevices,                  // Devices with 'fridge' in name
+    scanning,                       // Whether scan is in progress
+    connectedDevice,                // Currently connected device (or null)
+
+    // Methods
+    scan,                           // Start 10-second device scan
+    connect,                        // Connect to device and discover services
+    subscribeToCharacteristic,      // Subscribe to and decode characteristic updates
   };
 }

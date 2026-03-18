@@ -1,3 +1,17 @@
+/**
+ * InventoryMinimumSelector
+ * ========================
+ * Accordion component for configuring the minimum inventory level threshold
+ * at which the user receives low-inventory notifications.
+ *
+ * Features:
+ * - Collapsible accordion UI for compact settings integration
+ * - Slider control with 10-unit step increments (0-600 vials)
+ * - Real-time label display above slider thumb
+ * - Live Firestore synchronization on slider release
+ * - Green gradient styling for interactive feedback
+ */
+
 import React, { use, useState } from 'react';
 import {
   Accordion,
@@ -13,19 +27,50 @@ import {
 } from '@gluestack-ui/themed';
 import { ChevronDown } from 'lucide-react-native';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
+
 const FRIDGE_ID = 'fridge_1';
 import { updateMinimumInventory } from '../../db/firestoreSettings';
 
+/* -------------------------------------------------------------------------- */
+/*                             Type Definitions                               */
+/* -------------------------------------------------------------------------- */
+
 interface InventoryMinimumSelectorProps {
-  minInventory?: number;
+  minInventory?: number;  // Initial minimum inventory level (default: 20 vials)
 }
+
+/* -------------------------------------------------------------------------- */
+/*                             Component Definition                            */
+/* -------------------------------------------------------------------------- */
 
 const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
   minInventory,
 }) => {
+  /* -------------------------------------------------------------------- */
+  /*                        State Management                               */
+  /* -------------------------------------------------------------------- */
+
+  // Tracks whether accordion is expanded
   const [open, setOpen] = useState(false);
+
+  // Current selected minimum inventory level (0-600 vials)
   const [inventoryLevel, setInventoryLevel] = useState<number>(minInventory ?? 20);
 
+  /* -------------------------------------------------------------------- */
+  /*                   Inventory Level Change Handler                      */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * handleInventoryChange()
+   * ----------------------
+   * Updates inventory threshold both locally and in Firestore.
+   * Called when user releases the slider (onValuesChangeFinish).
+   *
+   * Steps:
+   * 1. Update local state immediately for UI responsiveness
+   * 2. Persist to Firestore database
+   * 3. Log success or catch errors
+   */
   const handleInventoryChange = async (value: number) => {
     setInventoryLevel(value);
 
@@ -47,6 +92,7 @@ const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
       }}
     >
       <AccordionItem value="battery-level" bg="#282828ff" rounded="$2xl">
+        {/* Accordion Header with Title and Chevron */}
         <AccordionHeader>
           <AccordionTrigger>
             <HStack width="100%" alignItems="center">
@@ -54,6 +100,7 @@ const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
                 Minimum Inventory Level
               </AccordionTitleText>
 
+              {/* Rotating chevron indicator */}
               <Box
                 ml="auto"
                 mr="$2"
@@ -65,11 +112,14 @@ const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
           </AccordionTrigger>
         </AccordionHeader>
 
+        {/* Accordion Body: Descriptive Text + Slider */}
         <AccordionContent alignItems='center'>
           <AccordionContentText color="white" fontSize="$md" pb="$4" mb="$7">
             Here you can set the minimum inventory level at which you would
             like to receive notifications.
           </AccordionContentText>
+
+          {/* Multi-slider for inventory level selection (0-600 vials, step 10) */}
           <MultiSlider
             values={[inventoryLevel]}
             min={0}
@@ -87,7 +137,7 @@ const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
                   top: -30, // move labels above markers
                 }}
               >
-                {/* LEFT LABEL */}
+                {/* Inventory count label */}
                 <Box
                   style={{
                     position: 'absolute',

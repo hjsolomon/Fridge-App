@@ -1,3 +1,19 @@
+/**
+ * TempRangeSelector
+ * =================
+ * Accordion component for configuring the safe temperature range for the fridge.
+ * Users receive notifications if temperature goes outside this range.
+ *
+ * Features:
+ * - Collapsible accordion UI for compact settings integration
+ * - Dual-slider control for min/max bounds
+ * - 0.5°C step increments (0-10°C range)
+ * - Real-time dual label display above sliders
+ * - Live Firestore synchronization on slider release
+ * - Green gradient styling for interactive feedback
+ * - Safe range: 2-8°C (UNESCO standard for vaccine storage)
+ */
+
 import React, { use, useState } from 'react';
 import {
   Accordion,
@@ -13,24 +29,56 @@ import {
 } from '@gluestack-ui/themed';
 import { ChevronDown } from 'lucide-react-native';
 import MultiSlider from '@ptomasroos/react-native-multi-slider';
+
 const FRIDGE_ID = 'fridge_1';
 import { updateTemperatureRange } from '../../db/firestoreSettings';
 
+/* -------------------------------------------------------------------------- */
+/*                             Type Definitions                               */
+/* -------------------------------------------------------------------------- */
+
 interface TempRangeSelectorProps {
-  minTemp?: number;
-  maxTemp?: number;
+  minTemp?: number;  // Initial minimum temperature (default: 2°C)
+  maxTemp?: number;  // Initial maximum temperature (default: 8°C)
 }
+
+/* -------------------------------------------------------------------------- */
+/*                             Component Definition                            */
+/* -------------------------------------------------------------------------- */
 
 const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
   minTemp,
   maxTemp,
 }) => {
+  /* -------------------------------------------------------------------- */
+  /*                        State Management                               */
+  /* -------------------------------------------------------------------- */
+
+  // Tracks whether accordion is expanded
   const [open, setOpen] = useState(false);
+
+  // Min and max temperature bounds as tuple [minTemp, maxTemp]
   const [tempRange, setTempRange] = useState<[number, number]>([
     minTemp ?? 2,
     maxTemp ?? 8,
   ]);
 
+  /* -------------------------------------------------------------------- */
+  /*                   Temperature Range Change Handler                    */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * handleTempChange()
+   * ------------------
+   * Updates temperature range bounds both locally and in Firestore.
+   * Called when user releases either slider (onValuesChangeFinish).
+   *
+   * Steps:
+   * 1. Extract min and max from slider values
+   * 2. Update local state immediately for UI responsiveness
+   * 3. Persist range to Firestore database
+   * 4. Log success or catch errors
+   */
   const handleTempChange = async (values: number[]) => {
     const [min, max] = values;
     setTempRange([min, max]);
@@ -52,15 +100,16 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
         setOpen(value.includes('temp-range'));
       }}
     >
-      <AccordionItem value="temp-range" bg="#282828ff"         rounded="$2xl"
->
-        <AccordionHeader >
+      <AccordionItem value="temp-range" bg="#282828ff" rounded="$2xl">
+        {/* Accordion Header with Title and Chevron */}
+        <AccordionHeader>
           <AccordionTrigger>
             <HStack width="100%" alignItems="center">
               <AccordionTitleText color="white" fontSize="$lg">
                 Temperature Range
               </AccordionTitleText>
 
+              {/* Rotating chevron indicator */}
               <Box
                 ml="auto"
                 mr="$2"
@@ -72,12 +121,15 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
           </AccordionTrigger>
         </AccordionHeader>
 
+        {/* Accordion Body: Descriptive Text + Dual Slider */}
         <AccordionContent alignItems='center'>
           <AccordionContentText color="white" fontSize="$md" pb="$4" mb="$7">
             Here you can set your preferred temperature range for the fridge. Notifications will be sent if the temperature goes outside this range.
           </AccordionContentText>
+
+          {/* Dual-slider for temperature range selection (0-10°C, step 0.5°C) */}
           <MultiSlider
-            values={[0, 8]}
+            values={[tempRange[0], tempRange[1]]}
             min={0}
             max={10}
             step={0.5}
@@ -93,7 +145,7 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
                   top: -30, // move labels above markers
                 }}
               >
-                {/* LEFT LABEL */}
+                {/* LEFT LABEL: Minimum temperature */}
                 <Box
                   style={{
                     position: 'absolute',
@@ -109,7 +161,7 @@ const TempRangeSelector: React.FC<TempRangeSelectorProps> = ({
                   </Text>
                 </Box>
 
-                {/* RIGHT LABEL */}
+                {/* RIGHT LABEL: Maximum temperature */}
                 <Box
                   style={{
                     position: 'absolute',
