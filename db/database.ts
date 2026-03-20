@@ -38,6 +38,8 @@ export interface SensorReading {
   battery_level: number;
 }
 
+
+
 export interface Inventory {
   fridge_id: string;
   current_count: number;

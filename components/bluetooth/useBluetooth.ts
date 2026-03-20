@@ -156,10 +156,12 @@ export function useBluetooth() {
    * - serviceUUID: UUID of the service containing the characteristic
    * - characteristicUUID: UUID of the characteristic to monitor
    * - onUpdate: Callback invoked with decoded value (as string)
+   * - dataType: Optional data type for decoding ('int32', 'float', or 'utf8')
    *
    * Decoding Logic:
-   * - 4-byte values: Interpreted as signed 32-bit little-endian integer
-   * - Other sizes: Decoded as UTF-8 string
+   * - 'float': 4-byte IEEE 754 little-endian floating-point number
+   * - 'int32' (default): 4-byte signed 32-bit little-endian integer
+   * - 'utf8': Decoded as UTF-8 string
    *
    * Returns: Subscription object for cleanup, or null if subscription fails
    * Requires: A connected device to be present
@@ -168,6 +170,7 @@ export function useBluetooth() {
     serviceUUID: string,
     characteristicUUID: string,
     onUpdate?: (value: string) => void,
+    dataType: 'int32' | 'float' | 'utf8' = 'int32',
   ) => {
     if (!connectedDevice) {
       console.warn('No connected device');
@@ -189,9 +192,12 @@ export function useBluetooth() {
           try {
             const decodedValue = Buffer.from(characteristic.value, 'base64');
 
-            // Decode based on payload size
+            // Decode based on specified data type
             let value: string | number;
-            if (decodedValue.length === 4) {
+            if (dataType === 'float' && decodedValue.length === 4) {
+              // 4 bytes → IEEE 754 float, rounded to 1 decimal place
+              value = Math.round(decodedValue.readFloatLE(0) * 10) / 10;
+            } else if (dataType === 'int32' && decodedValue.length === 4) {
               // 4 bytes → signed 32-bit integer
               value = decodedValue.readInt32LE(0);
             } else {

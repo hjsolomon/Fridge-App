@@ -98,8 +98,10 @@ const BluetoothScreen: React.FC = () => {
           SERVICE_UUID,
           TEMP_CHARACTERISTIC_UUID,
           (value) => {
-            if (isMounted) setTempCharacteristicData(value);
+            if (isMounted){ setTempCharacteristicData(value);
+            }
           },
+          'float',
         );
 
         if (tempSubscription && isMounted) {
@@ -111,7 +113,8 @@ const BluetoothScreen: React.FC = () => {
           SERVICE_UUID,
           VACCINE_CHARACTERISTIC_UUID,
           (value) => {
-            if (isMounted) setVaccineCharacteristicData(value);
+            if (isMounted){ setVaccineCharacteristicData(value);
+            }
           },
         );
 
