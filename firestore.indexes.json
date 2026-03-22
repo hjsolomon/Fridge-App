@@ -7,6 +7,22 @@
         { "fieldPath": "fridge_id", "order": "ASCENDING" },
         { "fieldPath": "timestamp", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "SensorReadings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fridge_id", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "SensorReadings",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "fridge_id", "order": "ASCENDING" },
+        { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
     }
   ],
   "fieldOverrides": []

@@ -39,7 +39,6 @@ export interface SensorReading {
 }
 
 
-
 export interface Inventory {
   fridge_id: string;
   current_count: number;

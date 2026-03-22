@@ -1,5 +1,6 @@
 import { insertSensorReading, SensorReading } from '../db/database';
 import { v4 as uuidv4 } from 'uuid';
+import { logSensorReadingFirestore } from '../db/firestoreSensorReading';
 
 const FRIDGE_ID = 'fridge_1';
 
@@ -37,6 +38,7 @@ export const startSensorSimulator = () => {
       };
 
       await insertSensorReading(newReading);
+      await logSensorReadingFirestore(newReading);
       console.log('New simulated reading:', newReading.temperature.toFixed(1), '°C');
     } catch (err) {
       console.error('Failed to generate simulated reading:', err);

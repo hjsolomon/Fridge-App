@@ -8,7 +8,8 @@ const sensorReadingsRef = firestore().collection('SensorReadings');
 export async function getSensorLogsFirestore(fridgeId: string) {
   const snapshot = await sensorReadingsRef
     .where('fridge_id', '==', fridgeId)
-    .orderBy('timestamp', 'asc')
+    .orderBy('timestamp', 'desc')
+    .limit(20)
     .get();
 
   return snapshot.docs.map(d => d.data() as SensorReading);
@@ -24,10 +25,10 @@ export async function getCurrentReadingFirestore(fridgeId: string) {
 
   if (!snapshot.empty) {
     const latest = snapshot.docs[0].data() as SensorReading;
-    return latest.temperature ?? 0;
+    return latest;
   }
 
-  return 0;
+  return null;
 }
 
 // Add log

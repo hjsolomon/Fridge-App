@@ -22,7 +22,9 @@ import { Sun, Zap, Battery } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
 import BatteryBar from '@/components/home/BatteryReading';
 
-import { getLatestSensorReading, SensorReading } from '../db/database';
+// import { getLatestSensorReading, SensorReading } from '../db/database';
+import { SensorReading } from '../db/database';
+import { getCurrentReadingFirestore } from '@/db/firestoreSensorReading';
 
 const FRIDGE_ID = 'fridge_1';
 
@@ -79,8 +81,7 @@ const HomeScreen: React.FC = () => {
    */
   const fetchLatestReading = async () => {
     try {
-      const latestReading: SensorReading | null =
-        await getLatestSensorReading(FRIDGE_ID);
+      const latestReading = await getCurrentReadingFirestore(FRIDGE_ID);
 
       if (latestReading) {
         setTemp(latestReading.temperature);

@@ -18,7 +18,8 @@ import { Dimensions } from 'react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
 import TempGraph from '../components/insights/TempGraph';
 
-import { getLatestSensorReading, getAllReadings } from '../db/database';
+// import { getLatestSensorReading, getAllReadings } from '../db/database';
+import { getSensorLogsFirestore, getCurrentReadingFirestore } from '@/db/firestoreSensorReading';
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -111,7 +112,8 @@ const DashboardScreen: React.FC = () => {
   const fetchTemperatureData = useCallback(async () => {
     try {
       // Most recent reading
-      const latestReading = await getLatestSensorReading(FRIDGE_ID);
+      // const latestReading = await getLatestSensorReading(FRIDGE_ID);
+      const latestReading = await getCurrentReadingFirestore(FRIDGE_ID);
 
       if (latestReading) {
         setLatestTemp(latestReading.temperature);
@@ -130,7 +132,7 @@ const DashboardScreen: React.FC = () => {
       }
 
       // Historic readings
-      const all = await getAllReadings(FRIDGE_ID);
+      const all = await getSensorLogsFirestore(FRIDGE_ID);
 
       const sorted = all.sort(
         (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
