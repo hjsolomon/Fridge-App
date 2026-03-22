@@ -46,9 +46,10 @@ interface InventoryFormProps {
     count: number,
     lotNumber: string,
   ) => void;
+  isDisabled?: boolean;
 }
 
-const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
+const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit, isDisabled = false }) => {
   // Modal visibility control
   const [showModal, setShowModal] = useState(false);
 
@@ -105,6 +106,7 @@ const InventoryForm: React.FC<InventoryFormProps> = ({ onSubmit }) => {
         px="$6" // horizontal padding
         py="$3" // vertical padding
         onPress={() => setShowModal(true)}
+        isDisabled={isDisabled}
         style={{
           width: buttonWidth,
           minHeight: width * .15, // gives more vertical space without clipping text

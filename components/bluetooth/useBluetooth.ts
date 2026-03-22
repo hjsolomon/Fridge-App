@@ -34,10 +34,33 @@ export function useBluetooth() {
   // Currently connected device (null if disconnected)
   const [connectedDevice, setConnectedDevice] = useState<Device | null>(null);
 
+  // Bluetooth adapter state
+  const [bluetoothEnabled, setBluetoothEnabled] = useState<boolean>(false);
+
 
   /* -------------------------------------------------------------------- */
   /*                        Connection Lifecycle Management                 */
   /* -------------------------------------------------------------------- */
+
+  /**
+   * Monitors Bluetooth adapter state changes.
+   * Automatically disconnects device and stops scan if Bluetooth is disabled.
+   */
+  useEffect(() => {
+    const subscription = bleManager.onStateChange((state) => {
+      const enabled = state === 'PoweredOn';
+      setBluetoothEnabled(enabled);
+      if (!enabled) {
+        setConnectedDevice(null);
+        if (scanning) {
+          bleManager.stopDeviceScan();
+          setScanning(false);
+        }
+      }
+    }, true);
+
+    return () => subscription.remove();
+  }, [scanning]);
 
   /**
    * Listens for device disconnection events and updates state.
@@ -74,6 +97,7 @@ export function useBluetooth() {
    * Initiates a 10-second BLE device scan.
    *
    * Behavior:
+   * - Checks if Bluetooth is enabled
    * - Clears previous device lists
    * - Starts scanning and deduplicates by device ID
    * - Filters devices with 'fridge' in name into separate list
@@ -81,6 +105,11 @@ export function useBluetooth() {
    * - Updates scanning state accordingly
    */
   const scan = () => {
+    if (!bluetoothEnabled) {
+      console.warn('Bluetooth is not enabled');
+      return;
+    }
+
     setDevices([]);
     setFridgeDevices([]);
     setScanning(true);
@@ -230,6 +259,7 @@ export function useBluetooth() {
     fridgeDevices,                  // Devices with 'fridge' in name
     scanning,                       // Whether scan is in progress
     connectedDevice,                // Currently connected device (or null)
+    bluetoothEnabled,               // Whether Bluetooth is enabled
 
     // Methods
     scan,                           // Start 10-second device scan

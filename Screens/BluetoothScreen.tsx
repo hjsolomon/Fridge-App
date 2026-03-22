@@ -30,7 +30,7 @@ const BluetoothScreen: React.FC = () => {
   /* -------------------------------------------------------------------- */
 
   // BLE operations: scanning, connecting, subscribing
-  const { devices, scanning, fridgeDevices, scan, connect, connectedDevice, subscribeToCharacteristic } = useBluetooth();
+  const { devices, scanning, fridgeDevices, scan, connect, connectedDevice, subscribeToCharacteristic, bluetoothEnabled } = useBluetooth();
 
   const { width } = Dimensions.get('window');
   const buttonWidth = width * 0.9;
@@ -201,74 +201,84 @@ const BluetoothScreen: React.FC = () => {
         infoText="Enable Bluetooth and scan for nearby refrigerators."
       />
 
-      {/* Scan Button */}
-      <Button
-        bg="#3a783e"
-        rounded="$3xl"
-        alignSelf="center"
-        justifyContent="center"
-        alignItems="center"
-        mb="$4"
-        px="$6"
-        py="$3"
-        style={{ width: buttonWidth, minHeight: width * 0.15 }}
-        onPress={scan}
-        isDisabled={scanning}
-      >
-        <ButtonText size="xl" color="white">
-          {scanning ? 'Scanning…' : 'Scan for Devices'}
-        </ButtonText>
-      </Button>
+      {!bluetoothEnabled ? (
+        <Box flex={1} justifyContent="center" alignItems="center">
+          <Text color="white" textAlign="center" fontSize="$lg">
+            Bluetooth is disabled. Please enable Bluetooth to connect to devices.
+          </Text>
+        </Box>
+      ) : (
+        <>
+          {/* Scan Button */}
+          <Button
+            bg="#3a783e"
+            rounded="$3xl"
+            alignSelf="center"
+            justifyContent="center"
+            alignItems="center"
+            mb="$4"
+            px="$6"
+            py="$3"
+            style={{ width: buttonWidth, minHeight: width * 0.15 }}
+            onPress={scan}
+            isDisabled={scanning}
+          >
+            <ButtonText size="xl" color="white">
+              {scanning ? 'Scanning…' : 'Scan for Devices'}
+            </ButtonText>
+          </Button>
 
-      {/* Device List: Shows fridge devices with connection status */}
-      <Box
-        justifyContent="flex-start"
-        bg="#282828ff"
-        rounded="$2xl"
-        py="$1"
-        mb="$6"
-      >
-        <FlatList
-          data={fridgeDevices}
-          keyExtractor={item => item.id}
-          renderItem={({ item }) => {
-            const isConnected = connectedDevice?.id === item.id;
+          {/* Device List: Shows fridge devices with connection status */}
+          <Box
+            justifyContent="flex-start"
+            bg="#282828ff"
+            rounded="$2xl"
+            py="$1"
+            mb="$6"
+          >
+            <FlatList
+              data={fridgeDevices}
+              keyExtractor={item => item.id}
+              renderItem={({ item }) => {
+                const isConnected = connectedDevice?.id === item.id;
 
-            return (
-              <Button
-                mt="$3"
-                bg={isConnected ? '#3a783e' : '#282828ff'}
-                onPress={async () => {
-                  await connect(item);
-                }}
-              >
-                <Text color="white" fontSize="$lg">
-                  {item.name || 'Unnamed Device'}
-                </Text>
-              </Button>
-            );
-          }}
-        />
-      </Box>
+                return (
+                  <Button
+                    mt="$3"
+                    bg={isConnected ? '#3a783e' : '#282828ff'}
+                    onPress={async () => {
+                      await connect(item);
+                    }}
+                  >
+                    <Text color="white" fontSize="$lg">
+                      {item.name || 'Unnamed Device'}
+                    </Text>
+                  </Button>
+                );
+              }}
+            />
+          </Box>
 
-      {/* Connection Status */}
-      <Text color="white" textAlign="center">
-        {connectedDevice
-          ? `Connected to ${connectedDevice.name || 'Unnamed Device'}`
-          : 'No device connected'}
-      </Text>
+          {/* Connection Status */}
+          <Text color="white" textAlign="center">
+            {connectedDevice
+              ? `Connected to ${connectedDevice.name || 'Unnamed Device'}`
+              : 'No device connected'}
+          </Text>
 
-      {/* Real-time Characteristic Data */}
-      <Text color="white" textAlign="center" mt="$2">
-        {tempCharacteristicData
-          ? `Temperature: ${tempCharacteristicData}°C`
-          : 'Waiting for temperature data...'}
-      </Text>
-      <Text color="white" textAlign="center" mt="$2">
-        {vaccineCharacteristicData
-          ? `Vaccine Count: ${vaccineCharacteristicData}`
-          : 'Waiting for vaccine count data...'}
-      </Text>
+          {/* Real-time Characteristic Data */}
+          <Text color="white" textAlign="center" mt="$2">
+            {tempCharacteristicData
+              ? `Temperature: ${tempCharacteristicData}°C`
+              : 'Waiting for temperature data...'}
+          </Text>
+          <Text color="white" textAlign="center" mt="$2">
+            {vaccineCharacteristicData
+              ? `Vaccine Count: ${vaccineCharacteristicData}`
+              : 'Waiting for vaccine count data...'}
+          </Text>
+        </>
+      )}
     </Box>
   );
 };

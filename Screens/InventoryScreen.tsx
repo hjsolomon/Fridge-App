@@ -31,6 +31,7 @@ import {
 import 'react-native-get-random-values';
 import { v4 as uuidv4 } from 'uuid';
 import { Alert } from 'react-native';
+import { useBluetoothContext } from '../components/bluetooth/BluetoothContext';
 
 /**
  * InventoryScreen
@@ -76,6 +77,7 @@ const formatToMonthDay = (isoString: string) => {
 /* -------------------------------------------------------------------------- */
 
 const InventoryScreen: React.FC = () => {
+  const { connectedDevice } = useBluetoothContext();
   // Processed history for the graph (sorted + cumulative count)
   const [inventoryData, setInventoryData] = useState<InventoryData[]>([]);
 
@@ -247,7 +249,7 @@ const InventoryScreen: React.FC = () => {
       <InventoryGraph inventoryData={inventoryData} />
 
       {/* Add/remove form */}
-      <InventoryForm onSubmit={handleSubmit} />
+      <InventoryForm onSubmit={handleSubmit} isDisabled={!connectedDevice} />
 
       {/* CONFIRMATION MODAL */}
       <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>

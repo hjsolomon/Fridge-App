@@ -4,6 +4,7 @@ import { GluestackUIProvider, Box, Text } from '@gluestack-ui/themed';
 import { config } from '@gluestack-ui/config/src/gluestack-ui.config';
 import { createTables, insertInitialFridge } from './db/database';
 import { startSensorSimulator } from './utils/SensorSimulator';
+import { BluetoothProvider } from './components/bluetooth/BluetoothContext';
 
 const App = () => {
   const [dbReady, setDbReady] = useState(false);
@@ -30,7 +31,9 @@ const App = () => {
           <Text color="white">Initializing database…</Text>
         </Box>
       ) : (
-        <AppNavigator />
+        <BluetoothProvider>
+          <AppNavigator />
+        </BluetoothProvider>
       )}
     </GluestackUIProvider>
   );
