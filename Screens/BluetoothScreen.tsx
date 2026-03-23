@@ -30,15 +30,10 @@ const BluetoothScreen: React.FC = () => {
   /* -------------------------------------------------------------------- */
 
   // BLE operations: scanning, connecting, subscribing
-  const { devices, scanning, fridgeDevices, scan, connect, connectedDevice, subscribeToCharacteristic, bluetoothEnabled } = useBluetooth();
+  const { devices, scanning, fridgeDevices, scan, connect, connectedDevice, bluetoothEnabled, tempCharacteristicData, vaccineCharacteristicData } = useBluetooth();
 
   const { width } = Dimensions.get('window');
   const buttonWidth = width * 0.9;
-
-  // Characteristic data from connected device
-  const [tempCharacteristicData, setTempCharacteristicData] = React.useState<string | null>(null);
-  const [vaccineCharacteristicData, setVaccineCharacteristicData] =
-    React.useState<string | null>(null);
 
   /* -------------------------------------------------------------------- */
   /*                    Permissions (Android Only)                        */
@@ -60,87 +55,6 @@ const BluetoothScreen: React.FC = () => {
           requestPermissions: async () => {},
           openSettings: () => {},
         };
-
-  /* -------------------------------------------------------------------- */
-  /*                  Characteristic Subscription Setup                    */
-  /* -------------------------------------------------------------------- */
-
-  /**
-   * Effect: Subscribe to temperature and vaccine characteristics.
-   * Cleanup: Remove all subscriptions on unmount or device change.
-   *
-   * Flow:
-   * 1. Check if device is connected
-   * 2. Define service and characteristic UUIDs
-   * 3. Subscribe to both characteristics
-   * 4. Update state with incoming data
-   * 5. Clean up subscriptions on unmount
-   */
-  useEffect(() => {
-    if (!connectedDevice) {
-      setTempCharacteristicData(null);
-      setVaccineCharacteristicData(null);
-      return;
-    }
-
-    let isMounted = true;
-    let subscriptions: Array<any> = [];
-
-    const setupSubscription = async () => {
-      try {
-        // Service and characteristic UUIDs from device firmware
-        const SERVICE_UUID = '6a8da328-7627-43a6-a5b4-a4cfb5fd139c';
-        const TEMP_CHARACTERISTIC_UUID = '96ac696e-aba0-467f-8fd9-910a55394e54';
-        const VACCINE_CHARACTERISTIC_UUID = 'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
-
-        // Subscribe to temperature updates
-        const tempSubscription = await subscribeToCharacteristic(
-          SERVICE_UUID,
-          TEMP_CHARACTERISTIC_UUID,
-          (value) => {
-            if (isMounted){ setTempCharacteristicData(value);
-            }
-          },
-          'float',
-        );
-
-        if (tempSubscription && isMounted) {
-          subscriptions.push(tempSubscription);
-        }
-
-        // Subscribe to vaccine count updates
-        const vaccineSubscription = await subscribeToCharacteristic(
-          SERVICE_UUID,
-          VACCINE_CHARACTERISTIC_UUID,
-          (value) => {
-            if (isMounted){ setVaccineCharacteristicData(value);
-            }
-          },
-        );
-
-        if (vaccineSubscription && isMounted) {
-          subscriptions.push(vaccineSubscription);
-        }
-      } catch (error) {
-        console.error('Failed to setup subscriptions:', error);
-      }
-    };
-
-    setupSubscription();
-
-    // Cleanup: Remove subscriptions and mark unmounted
-    return () => {
-      isMounted = false;
-      subscriptions.forEach(sub => {
-        try {
-          sub?.remove?.();
-        } catch (error) {
-          console.error('Error removing subscription:', error);
-        }
-      });
-      subscriptions = [];
-    };
-  }, [connectedDevice, subscribeToCharacteristic]);
 
   /* -------------------------------------------------------------------- */
   /*                         Permission States                             */
