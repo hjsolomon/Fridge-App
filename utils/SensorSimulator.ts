@@ -37,9 +37,9 @@ export const startSensorSimulator = () => {
         synced: 1,
       };
 
-      await insertSensorReading(newReading);
-      await logSensorReadingFirestore(newReading);
-      console.log('New simulated reading:', newReading.temperature.toFixed(1), '°C');
+      // await insertSensorReading(newReading);
+      // await logSensorReadingFirestore(newReading);
+      // console.log('New simulated reading:', newReading.temperature.toFixed(1), '°C');
     } catch (err) {
       console.error('Failed to generate simulated reading:', err);
     }

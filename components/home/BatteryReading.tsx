@@ -27,7 +27,7 @@ interface BatteryBarProps {
   level: number; // Battery percentage (0-100)
 }
 
-const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
+const BatteryBar: React.FC<BatteryBarProps> = ({ level }) => {
   const { width } = Dimensions.get('window');
 
   /* -------------------------------------------------------------------- */
@@ -56,6 +56,17 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
     return ['#d43737ff', '#b22f21ff'];                     // Red: Critical
   };
 
+  /**
+   * getBorderColor()
+   * ----------------
+   * Returns border color matching the battery level.
+   */
+  const getBorderColor = () => {
+    if (level > 50) return '#3ca14a';
+    if (level > 20) return '#d99d36ff';
+    return '#b22f21ff';
+  };
+
   // Maintain minimum visible fill width (40%) for clarity at low levels
   const minFillPercent = 40;
   const adjustedLevel = Math.max(level, minFillPercent);
@@ -68,7 +79,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
           w={barWidth}
           h={barHeight}
           borderWidth={2}
-          borderColor="#9a9a9aff"
+          borderColor={getBorderColor()}
           rounded="$3xl"
           overflow="hidden"
           alignItems="center"
@@ -76,9 +87,9 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
           style={{
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.5,
-            shadowRadius: 4,
-            elevation: 5,
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 2,
           }}
         >
           {/* Battery fill with gradient */}
@@ -112,7 +123,7 @@ const BatteryBar: React.FC<{ level: number }> = ({ level }) => {
           w={tipWidth}
           h={tipHeight}
           bg="#1C1C1C"
-          borderColor="#9a9a9aff"
+          borderColor={getBorderColor()}
           borderWidth={2}
           borderLeftWidth={0}
           borderTopRightRadius={12}

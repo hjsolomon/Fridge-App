@@ -16,7 +16,7 @@ import React, { useEffect } from 'react';
 import { FlatList, Platform } from 'react-native';
 import { Box, Button, ButtonText, Text, Spinner } from '@gluestack-ui/themed';
 import { ScreenHeader } from '../components/ScreenHeader';
-import { useBluetooth } from '../components/bluetooth/useBluetooth';
+import { useBluetoothContext } from '../components/bluetooth/BluetoothContext';
 import { useAndroidPermissions } from './../utils/useAndroidPermissions';
 import { Dimensions } from 'react-native';
 
@@ -30,7 +30,17 @@ const BluetoothScreen: React.FC = () => {
   /* -------------------------------------------------------------------- */
 
   // BLE operations: scanning, connecting, subscribing
-  const { devices, scanning, fridgeDevices, scan, connect, connectedDevice, bluetoothEnabled, tempCharacteristicData, vaccineCharacteristicData } = useBluetooth();
+  const {
+    devices,
+    scanning,
+    fridgeDevices,
+    scan,
+    connect,
+    connectedDevice,
+    bluetoothEnabled,
+    tempCharacteristicData,
+    vaccineCharacteristicData,
+  } = useBluetoothContext();
 
   const { width } = Dimensions.get('window');
   const buttonWidth = width * 0.9;
@@ -118,7 +128,8 @@ const BluetoothScreen: React.FC = () => {
       {!bluetoothEnabled ? (
         <Box flex={1} justifyContent="center" alignItems="center">
           <Text color="white" textAlign="center" fontSize="$lg">
-            Bluetooth is disabled. Please enable Bluetooth to connect to devices.
+            Bluetooth is disabled. Please enable Bluetooth to connect to
+            devices.
           </Text>
         </Box>
       ) : (
@@ -141,7 +152,6 @@ const BluetoothScreen: React.FC = () => {
               {scanning ? 'Scanning…' : 'Scan for Devices'}
             </ButtonText>
           </Button>
-
           {/* Device List: Shows fridge devices with connection status */}
           <Box
             justifyContent="flex-start"
@@ -172,14 +182,12 @@ const BluetoothScreen: React.FC = () => {
               }}
             />
           </Box>
-
           {/* Connection Status */}
           <Text color="white" textAlign="center">
             {connectedDevice
               ? `Connected to ${connectedDevice.name || 'Unnamed Device'}`
               : 'No device connected'}
           </Text>
-
           {/* Real-time Characteristic Data */}
           <Text color="white" textAlign="center" mt="$2">
             {tempCharacteristicData
@@ -191,11 +199,29 @@ const BluetoothScreen: React.FC = () => {
               ? `Vaccine Count: ${vaccineCharacteristicData}`
               : 'Waiting for vaccine count data...'}
           </Text>
+          {/* if(connectedDevice)
+          {
+            <Button
+              bg="#D34949"
+              rounded="$3xl"
+              alignSelf="center"
+              justifyContent="center"
+              alignItems="center"
+              mt="$4"
+              px="$6"
+              py="$3"
+              style={{ width: buttonWidth, minHeight: width * 0.12 }}
+              onPress={disconnect}
+            >
+              <ButtonText size="xl" color="white">
+                Disconnect
+              </ButtonText>
+            </Button>
+          } */}
         </>
       )}
     </Box>
   );
 };
-
 
 export default BluetoothScreen;

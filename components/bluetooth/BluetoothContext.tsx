@@ -3,19 +3,46 @@ import { useBluetooth } from './useBluetooth';
 import { Device } from 'react-native-ble-plx';
 
 interface BluetoothContextType {
+  devices: Device[];
+  fridgeDevices: Device[];
+  scanning: boolean;
   connectedDevice: Device | null;
   bluetoothEnabled: boolean;
   tempCharacteristicData: string | null;
   vaccineCharacteristicData: string | null;
+  scan: () => void;
+  connect: (device: Device) => Promise<Device>;
 }
 
 const BluetoothContext = createContext<BluetoothContextType | undefined>(undefined);
 
 export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { connectedDevice, bluetoothEnabled, tempCharacteristicData, vaccineCharacteristicData } = useBluetooth();
+  const {
+    devices,
+    fridgeDevices,
+    scanning,
+    connectedDevice,
+    bluetoothEnabled,
+    tempCharacteristicData,
+    vaccineCharacteristicData,
+    scan,
+    connect,
+  } = useBluetooth();
 
   return (
-    <BluetoothContext.Provider value={{ connectedDevice, bluetoothEnabled, tempCharacteristicData, vaccineCharacteristicData }}>
+    <BluetoothContext.Provider
+      value={{
+        devices,
+        fridgeDevices,
+        scanning,
+        connectedDevice,
+        bluetoothEnabled,
+        tempCharacteristicData,
+        vaccineCharacteristicData,
+        scan,
+        connect,
+      }}
+    >
       {children}
     </BluetoothContext.Provider>
   );

@@ -12,7 +12,7 @@
  * - Cleanup on unmount
  */
 
-import { useEffect, useState, useCallback } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState, useCallback, useRef } from 'react';
 import { Device } from 'react-native-ble-plx';
 import { bleManager } from './bleManager';
 import { Buffer } from 'buffer';
@@ -44,6 +44,24 @@ export function useBluetooth() {
   const [tempCharacteristicData, setTempCharacteristicData] = useState<string | null>(null);
   const [vaccineCharacteristicData, setVaccineCharacteristicData] = useState<string | null>(null);
 
+  // Track if BT is currently disabling to block all state updates and async operations
+  const disablingRef = useRef(false);
+  const subscriptionsRef = useRef<Array<any>>([]);
+
+  // Helper: determine if discovered device is a fridge target
+  const isFridgeDevice = (device?: Device | null): boolean => {
+    if (!device?.name) return false;
+    return device.name.toLowerCase().includes('fridge');
+  };
+
+  // Helper: add missing devices without duplicate IDs
+  const addUniqueDevice = (setter: Dispatch<SetStateAction<Device[]>>, device: Device) => {
+    setter((devices) => {
+      const exists = devices.some((entry) => entry.id === device.id);
+      if (exists) return devices;
+      return [...devices, device];
+    });
+  };
 
   /* -------------------------------------------------------------------- */
   /*                        Connection Lifecycle Management                 */
@@ -56,18 +74,48 @@ export function useBluetooth() {
   useEffect(() => {
     const subscription = bleManager.onStateChange((state) => {
       const enabled = state === 'PoweredOn';
-      setBluetoothEnabled(enabled);
-      if (!enabled) {
-        setConnectedDevice(null);
+      
+      if (!enabled && !disablingRef.current) {
+        // Mark as disabling to block all state updates and async callbacks
+        disablingRef.current = true;
+
+        // Stop scan immediately
         if (scanning) {
           bleManager.stopDeviceScan();
           setScanning(false);
         }
+
+        // Clean up all active subscriptions
+        subscriptionsRef.current.forEach(sub => {
+          try {
+            sub?.remove?.();
+          } catch (error) {
+            console.warn('Error removing subscription during BT disable:', error);
+          }
+        });
+        subscriptionsRef.current = [];
+
+        // Cancel device connection without awaiting to avoid blocking
+        if (connectedDevice) {
+          bleManager.cancelDeviceConnection(connectedDevice.id).catch((error) => {
+            console.warn('Error canceling device connection on BT disable:', error);
+          });
+        }
+
+        // Clear all state synchronously
+        setConnectedDevice(null);
+        setTempCharacteristicData(null);
+        setVaccineCharacteristicData(null);
+        setBluetoothEnabled(false);
+      } else if (enabled) {
+        // Reset disabling flag when BT comes back on
+        disablingRef.current = false;
+        setBluetoothEnabled(true);
       }
     }, true);
 
     return () => subscription.remove();
-  }, [scanning]);
+  }, [scanning, connectedDevice]);
 
   /**
    * Listens for device disconnection events and updates state.
@@ -124,6 +172,10 @@ export function useBluetooth() {
         serviceUUID,
         characteristicUUID,
         (error, characteristic) => {
+          // Block all operations if BT is disabling
+          if (disablingRef.current || !connectedDevice || !bluetoothEnabled) {
+            return;
+          }
           if (error) {
             console.error('Subscription error:', error);
             return;
@@ -167,13 +219,22 @@ export function useBluetooth() {
    */
   useEffect(() => {
     if (!connectedDevice) {
+      // Clean up when disconnecting
+      subscriptionsRef.current.forEach(sub => {
+        try {
+          sub?.remove?.();
+        } catch (error) {
+          console.warn('Error removing subscription on disconnect:', error);
+        }
+      });
+      subscriptionsRef.current = [];
+
       setTempCharacteristicData(null);
       setVaccineCharacteristicData(null);
       return;
     }
 
     let isMounted = true;
-    let subscriptions: Array<any> = [];
 
     const setupSubscription = async () => {
       try {
@@ -187,7 +248,7 @@ export function useBluetooth() {
           SERVICE_UUID,
           TEMP_CHARACTERISTIC_UUID,
           async (value) => {
-            if (isMounted) {
+            if (isMounted && !disablingRef.current) {
               setTempCharacteristicData(value);
               // Log to Firestore
               const tempValue = parseFloat(value);
@@ -196,7 +257,7 @@ export function useBluetooth() {
                   reading_id: uuidv4(),
                   fridge_id: 'fridge_1',
                   temperature: tempValue,
-                  battery_level: 50, // placeholder
+                  battery_level: 50,
                   timestamp: new Date().toISOString(),
                   synced: 0,
                 };
@@ -211,8 +272,8 @@ export function useBluetooth() {
           'float',
         );
 
-        if (tempSubscription && isMounted) {
-          subscriptions.push(tempSubscription);
+        if (tempSubscription && isMounted && !disablingRef.current) {
+          subscriptionsRef.current.push(tempSubscription);
         }
 
         // Subscribe to vaccine count updates
@@ -220,7 +281,7 @@ export function useBluetooth() {
           SERVICE_UUID,
           VACCINE_CHARACTERISTIC_UUID,
           async (value) => {
-            if (isMounted) {
+            if (isMounted && !disablingRef.current) {
               setVaccineCharacteristicData(value);
               // Update inventory count in Firestore
               const vaccineValue = parseInt(value, 10);
@@ -236,8 +297,8 @@ export function useBluetooth() {
           },
         );
 
-        if (vaccineSubscription && isMounted) {
-          subscriptions.push(vaccineSubscription);
+        if (vaccineSubscription && isMounted && !disablingRef.current) {
+          subscriptionsRef.current.push(vaccineSubscription);
         }
       } catch (error) {
         console.error('Failed to setup subscriptions:', error);
@@ -249,14 +310,14 @@ export function useBluetooth() {
     // Cleanup: Remove subscriptions and mark unmounted
     return () => {
       isMounted = false;
-      subscriptions.forEach(sub => {
+      subscriptionsRef.current.forEach(sub => {
         try {
           sub?.remove?.();
         } catch (error) {
           console.error('Error removing subscription:', error);
         }
       });
-      subscriptions = [];
+      subscriptionsRef.current = [];
     };
   }, [connectedDevice, subscribeToCharacteristic]);
 
@@ -293,8 +354,13 @@ export function useBluetooth() {
       return;
     }
 
-    setDevices([]);
-    setFridgeDevices([]);
+    // Preserve any connected device so it does not disappear from the list mid-scan
+    if (connectedDevice) {
+      addUniqueDevice(setDevices, connectedDevice);
+      if (isFridgeDevice(connectedDevice)) {
+        addUniqueDevice(setFridgeDevices, connectedDevice);
+      }
+    }
     setScanning(true);
 
     bleManager.startDeviceScan(null, null, (error, device) => {
@@ -304,18 +370,13 @@ export function useBluetooth() {
         return;
       }
 
-      // Add any named device to general devices list (avoid duplicates)
-      if (device?.name) {
-        setDevices(prev =>
-          prev.some(d => d.id === device.id) ? prev : [...prev, device],
-        );
+      if (!device?.name) {
+        return;
       }
 
-      // Also add to fridge-specific list if name contains 'fridge'
-      if (device?.name?.toLowerCase().includes('fridge')) {
-        setFridgeDevices(prev =>
-          prev.some(d => d.id === device.id) ? prev : [...prev, device],
-        );
+      addUniqueDevice(setDevices, device);
+      if (isFridgeDevice(device)) {
+        addUniqueDevice(setFridgeDevices, device);
       }
     });
 
@@ -348,6 +409,13 @@ export function useBluetooth() {
       const connected = await device.connect();
       await connected.discoverAllServicesAndCharacteristics();
       setConnectedDevice(connected);
+
+      // Ensure connected device remains present in the scan results lists.
+      addUniqueDevice(setDevices, connected);
+      if (isFridgeDevice(connected)) {
+        addUniqueDevice(setFridgeDevices, connected);
+      }
+
       return connected;
     } catch (e) {
       console.warn('Connection failed:', e);

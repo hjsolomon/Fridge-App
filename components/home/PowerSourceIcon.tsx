@@ -73,10 +73,18 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
    * Returns gradient colors based on power source active state.
    * Active: Green gradient for operational status
    * Inactive: Gray gradient for disabled/unavailable status
+   * Now with reduced opacity to indicate these are not buttons
    */
   const gradientColors = active
-    ? ['#6ebb6aff', '#3ca14a']      // Green: Active/available
-    : ['#8c8c8cff', '#6c6c6cff'];   // Gray: Inactive/unavailable
+    ? ['#6ebb6a80', '#3ca14a80']      // Green: Active/available (50% opacity)
+    : ['#8c8c8c80', '#6c6c6c80'];   // Gray: Inactive/unavailable (50% opacity)
+
+  /**
+   * getBorderColor()
+   * ----------------
+   * Returns border color matching the active state for outline.
+   */
+  const borderColor = active ? '#3ca14a' : '#6c6c6c';
 
   return (
     <Box alignItems="center" mx="$0.5">
@@ -93,9 +101,11 @@ const PowerSourceIcon: React.FC<SourceIconProps> = ({
           justifyContent: 'center',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.25,
-          shadowRadius: 4,
-          elevation: 6,
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+          elevation: 2,
+          borderWidth: 2,
+          borderColor,
         }}
       >
         {renderedIcon}
