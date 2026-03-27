@@ -8,22 +8,30 @@ const inventoryRef = (fridgeId: string) =>
 const logsRef = firestore().collection('InventoryLogs');
 
 // Fetch logs
-export async function getInventoryLogsFirestore(fridgeId: string) {
-  const snapshot = await logsRef
+export function getInventoryLogsFirestore(fridgeId: string, callback: (logs: InventoryLog[]) => void) {
+  const unsubscribe = logsRef
     .where('fridge_id', '==', fridgeId)
-    .orderBy('timestamp', 'asc')
-    .get();
-
-  return snapshot.docs.map(d => d.data() as InventoryLog);
+    .orderBy('timestamp', 'desc')
+    .limit(20)
+    .onSnapshot(snapshot => {
+      const logs = snapshot.docs.map(doc => doc.data() as InventoryLog);
+      callback(logs);
+    });
+  return unsubscribe;
 }
 
+
+
 // Fetch Current Inventory
-export async function getCurrentInventoryFirestore(fridgeId: string) {
-  const doc = await inventoryRef(fridgeId).get();
-  if (doc.exists()) {
-    return doc.data()?.current_count ?? 0;
-  }
-  return 0;
+export function getCurrentInventoryFirestore(fridgeId: string, callback: (count: number) => void) {
+  const unsubscribe = inventoryRef(fridgeId).onSnapshot(snapshot => {
+    if (snapshot.exists()) {
+      callback(snapshot.data()?.current_count ?? 0);
+    } else {
+      callback(0);
+    }
+  });
+  return unsubscribe;
 }
 
 // Add log + update inventory count safely

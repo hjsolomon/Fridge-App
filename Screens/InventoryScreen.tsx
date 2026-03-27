@@ -12,46 +12,27 @@ import {
   Button,
   ButtonText,
 } from '@gluestack-ui/themed';
+import { Dimensions, Alert } from 'react-native';
 
 import { ScreenHeader } from '../components/ScreenHeader';
 import InventoryReading from '../components/inventory/InventoryReading';
 import InventoryGraph from '@/components/inventory/InventoryGraph';
 import InventoryForm from '@/components/inventory/InventoryForm';
-import db from '../db/firestore';
-import { Dimensions } from 'react-native';
 
 import { InventoryLog } from '../db/database';
+import { v4 as uuidv4 } from 'uuid';
+import { useBluetoothContext } from '../components/bluetooth/BluetoothContext';
 
 import {
   getInventoryLogsFirestore,
   logInventoryActionFirestore,
-  getCurrentInventoryFirestore,
 } from '@/db/firestoreInventory';
-
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
-import { Alert } from 'react-native';
-import { useBluetoothContext } from '../components/bluetooth/BluetoothContext';
-
-/**
- * InventoryScreen
- * ----------------
- * Provides full inventory management for the fridge.
- *
- * Features:
- * - Displays current inventory level
- * - Shows a historical inventory graph
- * - Allows adding and removing inventory through a form
- * - Validates operations (no over-removal, no exceeding capacity)
- * - Recomputes inventory history from change logs
- */
 
 const FRIDGE_ID = 'fridge_1';
 
 /* -------------------------------------------------------------------------- */
 /*                             Type Definitions                                */
 /* -------------------------------------------------------------------------- */
-
 interface InventoryData {
   timestamp: string;
   count: number;
@@ -60,13 +41,6 @@ interface InventoryData {
 /* -------------------------------------------------------------------------- */
 /*                                Helper Utils                                 */
 /* -------------------------------------------------------------------------- */
-
-/**
- * formatToMonthDay()
- * -------------------
- * Converts an ISO timestamp (e.g., "2025-02-19T13:24:00Z")
- * into compact "MM/DD" label for graph display.
- */
 const formatToMonthDay = (isoString: string) => {
   const date = new Date(isoString);
   return `${date.getMonth() + 1}/${date.getDate()}`;
@@ -75,15 +49,11 @@ const formatToMonthDay = (isoString: string) => {
 /* -------------------------------------------------------------------------- */
 /*                            Component Definition                             */
 /* -------------------------------------------------------------------------- */
-
 const InventoryScreen: React.FC = () => {
   const { connectedDevice } = useBluetoothContext();
-  // Processed history for the graph (sorted + cumulative count)
+
   const [inventoryData, setInventoryData] = useState<InventoryData[]>([]);
-
-  // Latest computed count (reflected in UI and validation logic)
   const [latestInventory, setLatestInventory] = useState<number>(0);
-
   const [showConfirm, setShowConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState<{
     action: 'Add' | 'Remove';
@@ -91,48 +61,30 @@ const InventoryScreen: React.FC = () => {
     lotNumber?: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
   const width = Dimensions.get('window').width;
-  const modalWidth = width * 0.8; // Modal scales proportionally
+  const modalWidth = width * 0.8;
 
-  /* ------------------------------------------------------------------------ */
-  /*                       Fetch & Rebuild Inventory State                    */
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * fetchInventory()
-   * -----------------
-   * Recomputes inventory history and current count by:
-   *  1. Fetching latest `inventory` table values
-   *  2. Fetching all logs for the fridge
-   *  3. Sorting logs chronologically
-   *  4. Replaying all add/remove events to rebuild historical counts
-   *
-   */
-  const fetchInventory = useCallback(async () => {
-    try {
-      // Fetch and sort logs (oldest → newest)
-      const logs = await getInventoryLogsFirestore(FRIDGE_ID);
+  /* ---------------------- Real-time Inventory Listener -------------------- */
+  useEffect(() => {
+    const unsubscribe = getInventoryLogsFirestore(FRIDGE_ID, (logs: InventoryLog[]) => {
+      // Sort logs chronologically
       const sortedLogs = logs.sort(
-        (a, b) =>
-          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
+        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
       );
 
+      // Rebuild cumulative inventory history
       let runningCount = 0;
-      const history = [];
+      const history: InventoryData[] = [];
 
       for (const log of sortedLogs) {
         runningCount += log.action === 'add' ? log.count : -log.count;
-
         history.push({
-          timestamp: formatToMonthDay(
-            log.timestamp ?? new Date().toISOString(),
-          ),
+          timestamp: formatToMonthDay(log.timestamp ?? new Date().toISOString()),
           count: runningCount,
         });
       }
 
-      const currentInventory = await getCurrentInventoryFirestore(FRIDGE_ID);
-      setLatestInventory(currentInventory);
       setInventoryData(
         history.length > 0
           ? history
@@ -141,86 +93,60 @@ const InventoryScreen: React.FC = () => {
                 timestamp: formatToMonthDay(new Date().toISOString()),
                 count: runningCount,
               },
-            ],
+            ]
       );
-    } catch (err) {
-      console.error('Failed to fetch inventory or logs:', err);
-    }
+
+      // Update latest inventory count
+      setLatestInventory(runningCount);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  /* ------------------------------------------------------------------------ */
-  /*                        Load Inventory on Mount                           */
-  /* ------------------------------------------------------------------------ */
-
-  useEffect(() => {
-    fetchInventory();
-  }, [fetchInventory]);
-
-  /* ------------------------------------------------------------------------ */
-  /*                        Add / Remove Inventory Logic                      */
-  /* ------------------------------------------------------------------------ */
-
-  /**
-   * handleSubmit()
-   * ---------------
-   * Handles add/remove form submissions.
-   *
-   * Validations:
-   * - Prevent removing more than available
-   * - Prevent exceeding fridge capacity (600 units)
-   *
-   * When valid:
-   * - Creates a new log entry
-   * - Writes it to database
-   * - Re-fetches full inventory state
-   */
+  /* ------------------------ Add / Remove Inventory ------------------------ */
   const handleSubmit = async (
     action: 'Add' | 'Remove',
     count: number,
-    lotNumber?: string,
+    lotNumber?: string
   ) => {
-    // Prevent removal beyond available inventory
     if (action === 'Remove' && count > latestInventory) {
       Alert.alert(
         'Invalid Operation',
-        'You cannot remove more vials than are currently available.',
+        'You cannot remove more vials than are currently available.'
       );
       return;
     }
 
-    // Prevent exceeding hard fridge capacity
     if (action === 'Add' && latestInventory + count > 600) {
       Alert.alert(
         'Invalid Operation',
-        'The fridge cannot hold more than 600 vials.',
+        'The fridge cannot hold more than 600 vials.'
       );
       return;
     }
+
     setPendingAction({ action, count, lotNumber });
     setShowConfirm(true);
   };
 
   const confirmSubmission = async () => {
-    if (!pendingAction) return;
-
-    if (isSubmitting) return; // Prevent multiple calls
+    if (!pendingAction || isSubmitting) return;
     setIsSubmitting(true);
 
-    const { action, count, lotNumber } = pendingAction;
-    const timestampISO = new Date().toISOString();
+    const { action, count } = pendingAction;
 
     const log: InventoryLog = {
       log_id: uuidv4(),
       fridge_id: FRIDGE_ID,
       action: action.toLowerCase() as 'add' | 'remove',
       count,
-      timestamp: timestampISO,
+      timestamp: new Date().toISOString(),
       synced: 0,
     };
 
     try {
       await logInventoryActionFirestore(log);
-      await fetchInventory();
+      // No need to manually fetch logs; listener updates UI automatically
     } catch (err) {
       console.error('Failed to submit inventory change:', err);
     } finally {
@@ -230,19 +156,15 @@ const InventoryScreen: React.FC = () => {
     }
   };
 
-  /* -------------------------------------------------------------------------- */
-  /*                                UI Rendering                                */
-  /* -------------------------------------------------------------------------- */
-
+  /* ----------------------------- UI Rendering ------------------------------ */
   return (
     <Box flex={1} p="$4">
-      {/* Screen title + info popup */}
       <ScreenHeader
         title="Inventory"
         infoText="The Inventory screen allows you to manage the refrigerator's contents. Here you can view current inventory levels, add or remove vaccines, and track inventory changes over time."
       />
 
-      {/* Display card for current inventory */}
+      {/* Display current inventory */}
       <InventoryReading inventory={latestInventory} />
 
       {/* Historical inventory graph */}
@@ -251,11 +173,10 @@ const InventoryScreen: React.FC = () => {
       {/* Add/remove form */}
       <InventoryForm onSubmit={handleSubmit} isDisabled={!connectedDevice} />
 
-      {/* CONFIRMATION MODAL */}
+      {/* Confirmation Modal */}
       <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>
         <ModalBackdrop />
         <ModalContent bg="#282828" width={modalWidth}>
-          {/* Header */}
           <ModalHeader>
             <Text color="white" fontSize="$xl" fontWeight="$bold">
               Confirm {pendingAction?.action}
@@ -263,23 +184,20 @@ const InventoryScreen: React.FC = () => {
             <ModalCloseButton />
           </ModalHeader>
 
-          {/* Body */}
           <ModalBody>
             <Text color="white" fontSize="$md">
               Are you sure you want to{' '}
-              <Text color="white" fontWeight="$bold" underline={true}>
+              <Text color="white" fontWeight="$bold" underline>
                 {pendingAction?.action.toLowerCase()} {pendingAction?.count}
               </Text>{' '}
               vials?
             </Text>
           </ModalBody>
 
-          {/* Footer */}
           <ModalFooter>
             <Button bg="#3a783e" mr="$2" onPress={confirmSubmission}>
               <ButtonText color="white">Confirm</ButtonText>
             </Button>
-
             <Button
               variant="outline"
               borderColor="#3a783e"
