@@ -5,35 +5,45 @@ import { SensorReading } from '../db/database';
 const sensorReadingsRef = firestore().collection('SensorReadings');
 
 // Fetch logs
-export async function getSensorLogsFirestore(fridgeId: string) {
-  const snapshot = await sensorReadingsRef
+export function getSensorLogsFirestore(
+  fridgeId: string,
+  callback: (logs: SensorReading[]) => void,
+) {
+  const unsubscribe = sensorReadingsRef
     .where('fridge_id', '==', fridgeId)
     .orderBy('timestamp', 'desc')
     .limit(20)
-    .get();
+    .onSnapshot(snapshot => {
+      const logs = snapshot.docs.map(doc => doc.data() as SensorReading);
+      callback(logs);
+    });
 
-  return snapshot.docs.map(d => d.data() as SensorReading);
+  return unsubscribe;
 }
 
 // Fetch current/latest reading
-export async function getCurrentReadingFirestore(fridgeId: string) {
-  const snapshot = await sensorReadingsRef
+export function getCurrentReadingFirestore(
+  fridgeId: string,
+  callback: (reading: SensorReading | null) => void,
+) {
+  const unsubscribe = sensorReadingsRef
     .where('fridge_id', '==', fridgeId)
     .orderBy('timestamp', 'desc')
     .limit(1)
-    .get();
+    .onSnapshot(snapshot => {
+      if (!snapshot.empty) {
+        const latest = snapshot.docs[0].data() as SensorReading;
+        callback(latest);
+      } else {
+        callback(null);
+      }
+    });
 
-  if (!snapshot.empty) {
-    const latest = snapshot.docs[0].data() as SensorReading;
-    return latest;
-  }
-
-  return null;
+  return unsubscribe;
 }
 
 // Add log
 export async function logSensorReadingFirestore(log: SensorReading) {
   // Write log document (creates collection automatically)
   await sensorReadingsRef.doc(log.reading_id).set(log);
-
 }

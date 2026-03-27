@@ -6,6 +6,7 @@
  * Features:
  * - Pill-shaped tab bar with rounded corners
  * - Icon-based navigation with 5 main screens
+ * - Text labels beneath each icon
  * - Animated scale + opacity on tab selection
  * - Responsive sizing based on screen width
  * - Safe area inset handling for notched devices
@@ -36,12 +37,29 @@ const { width } = Dimensions.get('window');
  * TAB_BAR_HEIGHT
  * ---------------
  * Calculated total height of the bottom navigation bar.
- * Used by screen content to add bottom padding/margin.
+ * Increased to account for the added label text below each icon.
  */
 export const TAB_BAR_HEIGHT =
-  width * 0.17 +  // Button size
-  16 +            // Padding
-  12;             // Additional margin
+  width * 0.17 + // Button size
+  16 + // Padding
+  12 + // Additional margin
+  16; // Label text height
+
+/* -------------------------------------------------------------------------- */
+/*                          Label Mapping                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Human-readable labels for each route.
+ * Keys match navigation route names.
+ */
+const labels: Record<string, string> = {
+  Home: 'Home',
+  Bluetooth: 'Bluetooth',
+  Dashboard: 'Dashboard',
+  Inventory: 'Inventory',
+  Settings: 'Settings',
+};
 
 /* -------------------------------------------------------------------------- */
 /*                        Component Definition                                */
@@ -50,14 +68,14 @@ export const TAB_BAR_HEIGHT =
 /**
  * BottomNav
  * ----------
- * Renders the animated bottom tab navigation bar.
+ * Renders the animated bottom tab navigation bar with icon labels.
  *
  * Props (from BottomTabBarProps):
  * - state: Current navigation state with active route index
  * - navigation: Navigation prop for route changes
  *
  * Behavior:
- * - Maps state.routes to icon buttons
+ * - Maps state.routes to icon buttons with text labels beneath
  * - Animated feedback on focused tab (scale + opacity)
  * - Safe area inset handling for Apple notch/Android system bars
  */
@@ -69,9 +87,9 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
 
   // Responsive sizing based on screen width
-  const buttonSize = width * 0.17;  // Button container dimensions
-  const iconSize = width * 0.2;     // Icon dimensions within button
-  const maxWidth = 500;             // Max width constraint for large screens
+  const buttonSize = width * 0.17; // Button container dimensions
+  const iconSize = width * 0.2; // Icon dimensions within button
+  const maxWidth = 500; // Max width constraint for large screens
 
   /* -------------------------------------------------------------------- */
   /*                       Icon Mapping                                    */
@@ -82,11 +100,11 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
    * Keys match navigation route names.
    */
   const icons: Record<string, any> = {
-    Bluetooth,                    // Bluetooth connection screen
-    Settings,                     // Settings/configuration screen
-    Home,                         // Home dashboard
-    Dashboard: ChartSpline,       // Analytics/insights
-    Inventory: Syringe,          // Inventory management
+    Bluetooth, // Bluetooth connection screen
+    Settings, // Settings/configuration screen
+    Home, // Home dashboard
+    Dashboard: ChartSpline, // Analytics/insights
+    Inventory: Syringe, // Inventory management
   };
 
   return (
@@ -100,14 +118,14 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
       {/* Tab bar container with rounded pill shape */}
       <View
         flexDirection="row"
-        justifyContent="space-around"
+        justifyContent="space-between"
         alignItems="center"
         bg="#282828ff"
         px="$3"
         py="$2"
         mx="$2"
         mb="$1"
-        borderRadius="$full"
+        borderRadius="$3xl"
         style={{
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
@@ -122,36 +140,51 @@ export default function BottomNav({ state, navigation }: BottomTabBarProps) {
         {state.routes.map((route, index) => {
           const isFocused = state.index === index;
           const Icon = icons[route.name];
+          const label = labels[route.name] ?? route.name;
 
           return (
             <Button
               key={route.key}
-              w={buttonSize}
+              flex={1} 
+              minWidth={0} 
               h={buttonSize}
               borderRadius="$full"
               justifyContent="center"
               alignItems="center"
+              flexDirection="column"
               bg={'transparent'}
+              px="$1" 
               onPress={() => {
-                // Only navigate if not already on this tab
                 if (!isFocused) navigation.navigate(route.name);
               }}
             >
-              {/* Animated icon with scale and opacity transitions */}
               <MotiView
                 animate={{
-                  scale: isFocused ? 1.2 : 1,      // Grow when focused
-                  opacity: isFocused ? 1 : 0.6,    // Brighten when focused
+                  scale: isFocused ? 1.15 : 1, 
+                  opacity: isFocused ? 1 : 0.7,
                 }}
                 transition={{ type: 'timing', duration: 250 }}
               >
                 <ButtonIcon
                   as={Icon}
-                  size="2xl"
-                  style={{ width: iconSize, height: iconSize }}
+                  size="2xl" 
                   color={isFocused ? '#FFFFFF' : '#cdcdcdff'}
                 />
               </MotiView>
+
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit 
+                style={{
+                  color: isFocused ? '#FFFFFF' : '#cdcdcdff',
+                  fontSize: 10, 
+                  marginTop: 3,
+                  textAlign: 'center',
+                  width: '100%', 
+                }}
+              >
+                {label}
+              </Text>
             </Button>
           );
         })}

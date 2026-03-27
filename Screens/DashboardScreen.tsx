@@ -1,27 +1,14 @@
-/**
- * DashboardScreen
- * ================
- * Displays temperature analytics and insights.
- *
- * Features:
- * - Historical temperature graph from database
- * - Current temperature display
- * - Time elapsed since last sensor update
- * - Auto-refresh every 5 seconds
- * - Responsive typography sizing
- */
-
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 
 import { ScreenHeader } from '../components/ScreenHeader';
 import TempGraph from '../components/insights/TempGraph';
 
-// import { getLatestSensorReading, getAllReadings } from '../db/database';
-import { getSensorLogsFirestore, getCurrentReadingFirestore } from '@/db/firestoreSensorReading';
-import 'react-native-get-random-values';
-import { v4 as uuidv4 } from 'uuid';
+import {
+  getCurrentReadingFirestore,
+  getSensorLogsFirestore,
+} from '@/db/firestoreSensorReading';
 
 const FRIDGE_ID = 'fridge_1';
 
@@ -30,27 +17,21 @@ const FRIDGE_ID = 'fridge_1';
 /* -------------------------------------------------------------------------- */
 
 interface TempData {
-  timestamp: string;  // Formatted MM/DD HH:MM
-  value: number;      // Temperature in Celsius
+  timestamp: string; // Formatted MM/DD HH:MM
+  value: number; // Temperature in Celsius
 }
 
 /* -------------------------------------------------------------------------- */
 /*                              Helper Functions                              */
 /* -------------------------------------------------------------------------- */
 
-/**
- * formatToMonthDay()
- * -------------------
- * Converts ISO timestamp to "MM/DD HH:MM" format.
- * Used for graph labels.
- */
 const formatToMonthDay = (isoString: string) => {
   const date = new Date(isoString);
 
   const month = date.getMonth() + 1;
   const day = date.getDate();
 
-  let hours = date.getHours();
+  const hours = date.getHours();
   const minutes = date.getMinutes().toString().padStart(2, '0');
 
   return `${month}/${day} ${hours}:${minutes}`;
@@ -61,65 +42,32 @@ const formatToMonthDay = (isoString: string) => {
 /* -------------------------------------------------------------------------- */
 
 const DashboardScreen: React.FC = () => {
-  /* -------------------------------------------------------------------- */
-  /*                        State Management                               */
-  /* -------------------------------------------------------------------- */
-
-  // Historical temperature data for graph
+  /* -------------------------- State Management ---------------------------- */
   const [tempData, setTempData] = useState<TempData[]>([]);
+  const [latestTemp, setLatestTemp] = useState<number | null>(null);
+  const [timeSinceUpdate, setTimeSinceUpdate] =
+    useState<string>('Calculating...');
 
-  // Latest temperature reading
-  const [latestTemp, setLatestTemp] = useState<number>(0);
-
-  // Human-readable time since last update (e.g., "5 minutes ago")
-  const [timeSinceUpdate, setTimeSinceUpdate] = useState<string>('Calculating...');
-
-  /* -------------------------------------------------------------------- */
-  /*                        Responsive Sizing                              */
-  /* -------------------------------------------------------------------- */
-
+  /* --------------------------- Responsive Sizing --------------------------- */
   const { height } = Dimensions.get('window');
   const base = height;
 
-  // Typography sizing
   const metricFontLarge = Math.max(20, Math.round(base * 0.038));
   const metricFontMedium = Math.max(10, Math.round(base * 0.02));
-
-  // Spacing / padding
   const cardPaddingTop = Math.round(base * 0.01);
   const spacingS = Math.round(base * 0.01);
   const spacingXS = Math.round(base * 0.005);
-
-  // Screen padding
   const screenPadding = Math.round(base * 0.02);
 
-  /* -------------------------------------------------------------------- */
-  /*                    Fetch & Process Temperature Data                   */
-  /* -------------------------------------------------------------------- */
-
-  /**
-   * fetchTemperatureData()
-   * ----------------------
-   * Fetches latest reading and historical data.
-   *
-   * Steps:
-   * 1. Get most recent sensor reading
-   * 2. Calculate time elapsed since update
-   * 3. Fetch all historical readings
-   * 4. Sort chronologically and format for graph
-   * 5. Update state
-   */
-  const fetchTemperatureData = useCallback(async () => {
-    try {
-      // Most recent reading
-      // const latestReading = await getLatestSensorReading(FRIDGE_ID);
-      const latestReading = await getCurrentReadingFirestore(FRIDGE_ID);
-
-      if (latestReading) {
-        setLatestTemp(latestReading.temperature);
+  /* ---------------------- Firestore Real-time Listeners -------------------- */
+  useEffect(() => {
+    // Listen to the latest temperature reading
+    const unsubscribeLatest = getCurrentReadingFirestore(FRIDGE_ID, reading => {
+      if (reading) {
+        setLatestTemp(reading.temperature);
 
         // Calculate time elapsed
-        const last = new Date(latestReading.timestamp);
+        const last = new Date(reading.timestamp);
         const diffMs = Date.now() - last.getTime();
         const diffMins = Math.floor(diffMs / 60000);
         const diffHours = Math.floor(diffMins / 60);
@@ -127,18 +75,19 @@ const DashboardScreen: React.FC = () => {
         setTimeSinceUpdate(
           diffHours > 0
             ? `${diffHours}h ${diffMins % 60}m ago`
-            : `${diffMins} minutes ago`
+            : `${diffMins} minutes ago`,
         );
       }
+    });
 
-      // Historic readings
-      const all = await getSensorLogsFirestore(FRIDGE_ID);
-
-      const sorted = all.sort(
-        (a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+    // Listen to historical sensor logs
+    const unsubscribeLogs = getSensorLogsFirestore(FRIDGE_ID, logs => {
+      const sorted = logs.sort(
+        (a, b) =>
+          new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime(),
       );
 
-      const history: TempData[] = sorted.map((r) => ({
+      const history: TempData[] = sorted.map(r => ({
         timestamp: formatToMonthDay(r.timestamp ?? new Date().toISOString()),
         value: r.temperature,
       }));
@@ -149,33 +98,20 @@ const DashboardScreen: React.FC = () => {
           : [
               {
                 timestamp: formatToMonthDay(new Date().toISOString()),
-                value: latestReading?.temperature ?? 0,
+                value: logs[0]?.temperature ?? 0,
               },
-            ]
+            ],
       );
-    } catch (err) {
-      console.error('Failed to fetch temperature data:', err);
-    }
+    });
+
+    // Cleanup listeners on unmount
+    return () => {
+      unsubscribeLatest();
+      unsubscribeLogs();
+    };
   }, []);
 
-  /* -------------------------------------------------------------------- */
-  /*                    Auto-fetch on Mount & Interval                     */
-  /* -------------------------------------------------------------------- */
-
-  /**
-   * Fetch temperature data on mount and set 5-second refresh interval.
-   * Cleanup interval on unmount.
-   */
-  useEffect(() => {
-    fetchTemperatureData();
-    const interval = setInterval(() => fetchTemperatureData(), 5000);
-    return () => clearInterval(interval);
-  }, [fetchTemperatureData]);
-
-  /* -------------------------------------------------------------------- */
-  /*                              UI Rendering                             */
-  /* -------------------------------------------------------------------- */
-
+  /* ----------------------------- UI Rendering ------------------------------ */
   return (
     <Box flex={1} style={{ padding: screenPadding }}>
       <ScreenHeader
@@ -262,12 +198,9 @@ const DashboardScreen: React.FC = () => {
             paddingBottom: spacingS,
           }}
         >
-          {latestTemp ? `${latestTemp.toFixed(1)}°C` : '—'}
+          {latestTemp !== null ? `${latestTemp.toFixed(1)}°C` : '—'}
         </Text>
       </Box>
-
-
-      
     </Box>
   );
 };
