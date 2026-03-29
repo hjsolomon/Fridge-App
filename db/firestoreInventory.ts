@@ -11,16 +11,15 @@ const logsRef = firestore().collection('InventoryLogs');
 export function getInventoryLogsFirestore(fridgeId: string, callback: (logs: InventoryLog[]) => void) {
   const unsubscribe = logsRef
     .where('fridge_id', '==', fridgeId)
-    .orderBy('timestamp', 'desc')
+    .orderBy('timestamp', 'asc')
     .limit(20)
     .onSnapshot(snapshot => {
-      const logs = snapshot.docs.map(doc => doc.data() as InventoryLog);
+      const logs = snapshot.docs.map(d => d.data() as InventoryLog);
       callback(logs);
     });
+
   return unsubscribe;
 }
-
-
 
 // Fetch Current Inventory
 export function getCurrentInventoryFirestore(fridgeId: string, callback: (count: number) => void) {
@@ -31,6 +30,7 @@ export function getCurrentInventoryFirestore(fridgeId: string, callback: (count:
       callback(0);
     }
   });
+
   return unsubscribe;
 }
 
@@ -46,6 +46,13 @@ export async function logInventoryActionFirestore(log: InventoryLog) {
 
     // If doc doesn't exist, treat as 0
     const current = doc.exists() ? doc.data()?.current_count ?? 0 : 0;
+
+    if (log.action === 'set') {
+      // For 'set' action, we directly set the count to the log's count
+      tx.set(invRef, { current_count: log.count }, { merge: true });
+      return;
+    }
+
 
     const newCount =
       log.action === 'add' ? current + log.count : current - log.count;

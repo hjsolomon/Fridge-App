@@ -48,7 +48,7 @@ export interface Inventory {
 export interface InventoryLog {
   log_id: string;
   fridge_id: string;
-  action: 'add' | 'remove';
+  action: 'add' | 'remove' | 'set';
   count: number;
   timestamp: string;
   synced?: number;

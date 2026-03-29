@@ -12,13 +12,21 @@
  * - Cleanup on unmount
  */
 
-import { Dispatch, SetStateAction, useEffect, useState, useCallback, useRef } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
 import { Device } from 'react-native-ble-plx';
 import { bleManager } from './bleManager';
 import { Buffer } from 'buffer';
 import firestore from '@react-native-firebase/firestore';
 import { logSensorReadingFirestore } from '@/db/firestoreSensorReading';
 import { v4 as uuidv4 } from 'uuid';
+import { logInventoryActionFirestore } from '@/db/firestoreInventory';
 
 /* -------------------------------------------------------------------------- */
 /*                                  State Management                            */
@@ -41,8 +49,12 @@ export function useBluetooth() {
   const [bluetoothEnabled, setBluetoothEnabled] = useState<boolean>(false);
 
   // Characteristic data
-  const [tempCharacteristicData, setTempCharacteristicData] = useState<string | null>(null);
-  const [vaccineCharacteristicData, setVaccineCharacteristicData] = useState<string | null>(null);
+  const [tempCharacteristicData, setTempCharacteristicData] = useState<
+    string | null
+  >(null);
+  const [vaccineCharacteristicData, setVaccineCharacteristicData] = useState<
+    string | null
+  >(null);
 
   // Track if BT is currently disabling to block all state updates and async operations
   const disablingRef = useRef(false);
@@ -55,9 +67,12 @@ export function useBluetooth() {
   };
 
   // Helper: add missing devices without duplicate IDs
-  const addUniqueDevice = (setter: Dispatch<SetStateAction<Device[]>>, device: Device) => {
-    setter((devices) => {
-      const exists = devices.some((entry) => entry.id === device.id);
+  const addUniqueDevice = (
+    setter: Dispatch<SetStateAction<Device[]>>,
+    device: Device,
+  ) => {
+    setter(devices => {
+      const exists = devices.some(entry => entry.id === device.id);
       if (exists) return devices;
       return [...devices, device];
     });
@@ -72,9 +87,9 @@ export function useBluetooth() {
    * Automatically disconnects device and stops scan if Bluetooth is disabled.
    */
   useEffect(() => {
-    const subscription = bleManager.onStateChange((state) => {
+    const subscription = bleManager.onStateChange(state => {
       const enabled = state === 'PoweredOn';
-      
+
       if (!enabled && !disablingRef.current) {
         // Mark as disabling to block all state updates and async callbacks
         disablingRef.current = true;
@@ -90,15 +105,21 @@ export function useBluetooth() {
           try {
             sub?.remove?.();
           } catch (error) {
-            console.warn('Error removing subscription during BT disable:', error);
+            console.warn(
+              'Error removing subscription during BT disable:',
+              error,
+            );
           }
         });
         subscriptionsRef.current = [];
 
         // Cancel device connection without awaiting to avoid blocking
         if (connectedDevice) {
-          bleManager.cancelDeviceConnection(connectedDevice.id).catch((error) => {
-            console.warn('Error canceling device connection on BT disable:', error);
+          bleManager.cancelDeviceConnection(connectedDevice.id).catch(error => {
+            console.warn(
+              'Error canceling device connection on BT disable:',
+              error,
+            );
           });
         }
 
@@ -155,63 +176,69 @@ export function useBluetooth() {
    * Returns: Subscription object for cleanup, or null if subscription fails
    * Requires: A connected device to be present
    */
-  const subscribeToCharacteristic = useCallback(async (
-    serviceUUID: string,
-    characteristicUUID: string,
-    onUpdate?: (value: string) => void,
-    dataType: 'int32' | 'float' | 'utf8' = 'int32',
-  ) => {
-    if (!connectedDevice) {
-      console.warn('No connected device');
-      return;
-    }
+  const subscribeToCharacteristic = useCallback(
+    async (
+      serviceUUID: string,
+      characteristicUUID: string,
+      onUpdate?: (value: string) => void,
+      dataType: 'int32' | 'float' | 'utf8' = 'int32',
+    ) => {
+      if (!connectedDevice) {
+        console.warn('No connected device');
+        return;
+      }
 
-    try {
-      console.log(`Subscribing to ${serviceUUID} / ${characteristicUUID}`);
-      const subscription = connectedDevice.monitorCharacteristicForService(
-        serviceUUID,
-        characteristicUUID,
-        (error, characteristic) => {
-          // Block all operations if BT is disabling
-          if (disablingRef.current || !connectedDevice || !bluetoothEnabled) {
-            return;
-          }
-          if (error) {
-            console.error('Subscription error:', error);
-            return;
-          }
-          if (!characteristic?.value) return;
-
-          try {
-            const decodedValue = Buffer.from(characteristic.value, 'base64');
-
-            // Decode based on specified data type
-            let value: string | number;
-            if (dataType === 'float' && decodedValue.length === 4) {
-              // 4 bytes → IEEE 754 float, rounded to 1 decimal place
-              value = Math.round(decodedValue.readFloatLE(0) * 10) / 10;
-            } else if (dataType === 'int32' && decodedValue.length === 4) {
-              // 4 bytes → signed 32-bit integer
-              value = decodedValue.readInt32LE(0);
-            } else {
-              // Otherwise → UTF-8 string
-              value = decodedValue.toString('utf8');
+      try {
+        console.log(`Subscribing to ${serviceUUID} / ${characteristicUUID}`);
+        const subscription = connectedDevice.monitorCharacteristicForService(
+          serviceUUID,
+          characteristicUUID,
+          (error, characteristic) => {
+            // Block all operations if BT is disabling
+            if (disablingRef.current || !connectedDevice || !bluetoothEnabled) {
+              return;
             }
-            onUpdate?.(String(value));
-          } catch (decodeError) {
-            console.error('Failed to decode characteristic value:', decodeError);
-          }
-        },
-      );
+            if (error) {
+              console.error('Subscription error:', error);
+              return;
+            }
+            if (!characteristic?.value) return;
 
-      console.log(`Successfully subscribed to ${characteristicUUID}`);
-      return subscription;
-    } catch (error) {
-      console.error('Failed to subscribe to characteristic:', error);
-      console.error(`Characteristic: ${characteristicUUID}`);
-      return null;
-    }
-  }, [connectedDevice]);
+            try {
+              const decodedValue = Buffer.from(characteristic.value, 'base64');
+
+              // Decode based on specified data type
+              let value: string | number;
+              if (dataType === 'float' && decodedValue.length === 4) {
+                // 4 bytes → IEEE 754 float, rounded to 1 decimal place
+                value = Math.round(decodedValue.readFloatLE(0) * 10) / 10;
+              } else if (dataType === 'int32' && decodedValue.length === 4) {
+                // 4 bytes → signed 32-bit integer
+                value = decodedValue.readInt32LE(0);
+              } else {
+                // Otherwise → UTF-8 string
+                value = decodedValue.toString('utf8');
+              }
+              onUpdate?.(String(value));
+            } catch (decodeError) {
+              console.error(
+                'Failed to decode characteristic value:',
+                decodeError,
+              );
+            }
+          },
+        );
+
+        console.log(`Successfully subscribed to ${characteristicUUID}`);
+        return subscription;
+      } catch (error) {
+        console.error('Failed to subscribe to characteristic:', error);
+        console.error(`Characteristic: ${characteristicUUID}`);
+        return null;
+      }
+    },
+    [connectedDevice],
+  );
 
   /**
    * Sets up subscriptions to temperature and vaccine characteristics when connected.
@@ -241,13 +268,14 @@ export function useBluetooth() {
         // Service and characteristic UUIDs from device firmware
         const SERVICE_UUID = '6a8da328-7627-43a6-a5b4-a4cfb5fd139c';
         const TEMP_CHARACTERISTIC_UUID = '96ac696e-aba0-467f-8fd9-910a55394e54';
-        const VACCINE_CHARACTERISTIC_UUID = 'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
+        const VACCINE_CHARACTERISTIC_UUID =
+          'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
 
         // Subscribe to temperature updates
         const tempSubscription = await subscribeToCharacteristic(
           SERVICE_UUID,
           TEMP_CHARACTERISTIC_UUID,
-          async (value) => {
+          async value => {
             if (isMounted && !disablingRef.current) {
               setTempCharacteristicData(value);
               // Log to Firestore
@@ -264,7 +292,10 @@ export function useBluetooth() {
                 try {
                   await logSensorReadingFirestore(log);
                 } catch (error) {
-                  console.error('Failed to log temperature to Firestore:', error);
+                  console.error(
+                    'Failed to log temperature to Firestore:',
+                    error,
+                  );
                 }
               }
             }
@@ -280,21 +311,32 @@ export function useBluetooth() {
         const vaccineSubscription = await subscribeToCharacteristic(
           SERVICE_UUID,
           VACCINE_CHARACTERISTIC_UUID,
-          async (value) => {
+          async value => {
             if (isMounted && !disablingRef.current) {
               setVaccineCharacteristicData(value);
               // Update inventory count in Firestore
               const vaccineValue = parseInt(value, 10);
               if (!isNaN(vaccineValue)) {
-                const invRef = firestore().collection('Inventory').doc('fridge_1');
+                const log = {
+                  log_id: uuidv4(),
+                  fridge_id: 'fridge_1',
+                  action: 'set' as const,
+                  count: vaccineValue,
+                  timestamp: new Date().toISOString(),
+                  synced: 0,
+                };
                 try {
-                  await invRef.set({ current_count: vaccineValue }, { merge: true });
+                  await logInventoryActionFirestore(log);
                 } catch (error) {
-                  console.error('Failed to update inventory count:', error);
+                  console.error(
+                    'Failed to update inventory from vaccine characteristic:',
+                    error,
+                  );
                 }
               }
             }
           },
+          'int32',
         );
 
         if (vaccineSubscription && isMounted && !disablingRef.current) {
@@ -320,6 +362,75 @@ export function useBluetooth() {
       subscriptionsRef.current = [];
     };
   }, [connectedDevice, subscribeToCharacteristic]);
+
+  const writeCharacteristic = useCallback(
+    async (
+      serviceUUID: string,
+      characteristicUUID: string,
+      value: string | number,
+      dataType: 'int32' | 'float' | 'utf8' = 'int32',
+    ) => {
+      if (!connectedDevice) {
+        console.warn('No connected device');
+        return;
+      }
+
+      try {
+        let buffer;
+
+        if (dataType === 'int32') {
+          buffer = Buffer.alloc(4);
+          buffer.writeInt32LE(Number(value), 0);
+        } else if (dataType === 'float') {
+          buffer = Buffer.alloc(4);
+          buffer.writeFloatLE(Number(value), 0);
+        } else {
+          buffer = Buffer.from(String(value), 'utf8');
+        }
+
+        const base64Value = buffer.toString('base64');
+
+        await connectedDevice.writeCharacteristicWithResponseForService(
+          serviceUUID,
+          characteristicUUID,
+          base64Value,
+        );
+
+        console.log('Write success');
+      } catch (error) {
+        console.error('Write failed:', error);
+      }
+    },
+    [connectedDevice],
+  );
+
+  useEffect(() => {
+    if (!connectedDevice) return;
+
+    const SERVICE_UUID = '6a8da328-7627-43a6-a5b4-a4cfb5fd139c';
+
+    const INVENTORY_WRITE_UUID = '12345678-1234-1234-1234-123456789abc';
+
+    const unsubscribe = firestore()
+      .collection('Inventory')
+      .doc('fridge_1')
+      .onSnapshot(async snapshot => {
+        if (!snapshot.exists()) return;
+
+        const count = snapshot.data()?.current_count ?? 0;
+
+        console.log('Inventory changed:', count);
+
+        await writeCharacteristic(
+          SERVICE_UUID,
+          INVENTORY_WRITE_UUID,
+          count,
+          'int32',
+        );
+      });
+
+    return unsubscribe;
+  }, [connectedDevice, writeCharacteristic]);
 
   /**
    * Cleanup on unmount: stops any active device scan.
@@ -429,17 +540,18 @@ export function useBluetooth() {
 
   return {
     // State
-    devices,                        // All discovered devices
-    fridgeDevices,                  // Devices with 'fridge' in name
-    scanning,                       // Whether scan is in progress
-    connectedDevice,                // Currently connected device (or null)
-    bluetoothEnabled,               // Whether Bluetooth is enabled
-    tempCharacteristicData,         // Latest temperature from BLE
-    vaccineCharacteristicData,      // Latest vaccine count from BLE
+    devices, // All discovered devices
+    fridgeDevices, // Devices with 'fridge' in name
+    scanning, // Whether scan is in progress
+    connectedDevice, // Currently connected device (or null)
+    bluetoothEnabled, // Whether Bluetooth is enabled
+    tempCharacteristicData, // Latest temperature from BLE
+    vaccineCharacteristicData, // Latest vaccine count from BLE
 
     // Methods
-    scan,                           // Start 10-second device scan
-    connect,                        // Connect to device and discover services
-    subscribeToCharacteristic,      // Subscribe to and decode characteristic updates
+    scan, // Start 10-second device scan
+    connect, // Connect to device and discover services
+    subscribeToCharacteristic, // Subscribe to and decode characteristic updates
+    writeCharacteristic, // Write value to characteristic with specified data type
   };
 }
