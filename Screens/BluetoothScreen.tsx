@@ -36,6 +36,7 @@ const BluetoothScreen: React.FC = () => {
     fridgeDevices,
     scan,
     connect,
+    disconnect,
     connectedDevice,
     bluetoothEnabled,
     tempCharacteristicData,
@@ -199,8 +200,8 @@ const BluetoothScreen: React.FC = () => {
               ? `Vaccine Count: ${vaccineCharacteristicData}`
               : 'Waiting for vaccine count data...'}
           </Text>
-          {/* if(connectedDevice)
-          {
+          {/* Disconnect Button */}
+          {connectedDevice && (
             <Button
               bg="#D34949"
               rounded="$3xl"
@@ -217,7 +218,7 @@ const BluetoothScreen: React.FC = () => {
                 Disconnect
               </ButtonText>
             </Button>
-          } */}
+          )}
         </>
       )}
     </Box>

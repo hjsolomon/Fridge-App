@@ -535,6 +535,37 @@ export function useBluetooth() {
   };
 
   /* -------------------------------------------------------------------- */
+  /*                           Device Disconnection                            */
+  /* -------------------------------------------------------------------- */
+
+  /**
+   * disconnect()
+   * -------------
+   * Disconnects from the currently connected device, if any.
+   * Updates state to reflect disconnection and cleans up resources.
+   * Does not throw errors to avoid disrupting user flow, but logs any issues encountered.
+   * Requires: A connected device to be present
+   * Note: The onDisconnected listener will also update state when disconnection is detected, so this function primarily initiates the disconnect process.
+   *       Any errors during disconnection are logged but not thrown to avoid disrupting user flow, as disconnection can occur for various reasons (e.g., device out of range) that may not require user intervention.  
+   * 
+   * Steps:
+   * 1. Check if a device is currently connected; if not, exit early
+   * 2. Attempt to cancel the device connection using the BLE manager
+   * 3. If successful, update state to reflect no connected device
+   * 4. If an error occurs, log the error for debugging purposes but do not throw it to avoid disrupting user flow
+   */
+  
+  const disconnect = async () => {
+    if (!connectedDevice) return;
+    try {
+      await bleManager.cancelDeviceConnection(connectedDevice.id);
+      setConnectedDevice(null);
+    } catch (error) {
+      console.warn('Disconnect failed:', error);
+    }
+  };
+
+  /* -------------------------------------------------------------------- */
   /*                            Hook API Return Value                       */
   /* -------------------------------------------------------------------- */
 
@@ -553,5 +584,6 @@ export function useBluetooth() {
     connect, // Connect to device and discover services
     subscribeToCharacteristic, // Subscribe to and decode characteristic updates
     writeCharacteristic, // Write value to characteristic with specified data type
+    disconnect, // Disconnect from current device
   };
 }

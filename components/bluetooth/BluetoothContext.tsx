@@ -11,6 +11,7 @@ interface BluetoothContextType {
   tempCharacteristicData: string | null;
   vaccineCharacteristicData: string | null;
   scan: () => void;
+  disconnect: () => void;
   connect: (device: Device) => Promise<Device>;
 }
 
@@ -27,6 +28,7 @@ export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children 
     vaccineCharacteristicData,
     scan,
     connect,
+      disconnect,
   } = useBluetooth();
 
   return (
@@ -41,6 +43,7 @@ export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children 
         vaccineCharacteristicData,
         scan,
         connect,
+        disconnect,
       }}
     >
       {children}
