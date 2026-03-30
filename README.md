@@ -1,3 +1,8 @@
+<img width="204" height="450" alt="image" src="https://github.com/user-attachments/assets/1ca93979-8e55-47c3-921f-ee2bf0ee54df" />
+<img width="205" height="450" alt="image" src="https://github.com/user-attachments/assets/3c7aff3e-1bd0-41f8-8863-bb45879af84b" />
+<img width="203" height="450" alt="image" src="https://github.com/user-attachments/assets/9fd787ef-b970-439e-bd18-0d8708eb8b7c" />
+
+
 # FridgeApp
 
 FridgeApp is a React Native mobile application designed to monitor refrigerator conditions and inventory using Bluetooth sensor data, local storage, and cloud synchronization. The app provides real-time temperature tracking, battery monitoring, inventory management, and configurable alerts to help maintain food safety and system reliability.
