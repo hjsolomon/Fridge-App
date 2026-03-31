@@ -82,8 +82,11 @@ const InventoryScreen: React.FC = () => {
         const history: InventoryData[] = [];
 
         sortedLogs.forEach(log => {
-          runningCount += log.action === 'add' ? log.count : -log.count;
-
+          if (log.action === 'set') {
+            runningCount = log.count;
+          } else {
+            runningCount += log.action === 'add' ? log.count : -log.count;
+          }
           history.push({
             timestamp: formatToMonthDay(
               log.timestamp ?? new Date().toISOString(),
@@ -206,9 +209,9 @@ const InventoryScreen: React.FC = () => {
 
       <InventoryGraph inventoryData={inventoryData} />
 
-      <InventoryForm onSubmit={handleSubmit} 
-      // isDisabled={!connectedDevice} 
-      
+      <InventoryForm
+        onSubmit={handleSubmit}
+        // isDisabled={!connectedDevice}
       />
 
       <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>

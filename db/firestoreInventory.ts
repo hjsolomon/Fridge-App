@@ -48,6 +48,10 @@ export async function logInventoryActionFirestore(log: InventoryLog) {
     const current = doc.exists() ? doc.data()?.current_count ?? 0 : 0;
 
     if (log.action === 'set') {
+      if(log.count === current) {
+        // No change needed, skip transaction
+        return;
+      }
       // For 'set' action, we directly set the count to the log's count
       tx.set(invRef, { current_count: log.count }, { merge: true });
       return;

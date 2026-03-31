@@ -26,7 +26,10 @@ import { Buffer } from 'buffer';
 import firestore from '@react-native-firebase/firestore';
 import { logSensorReadingFirestore } from '@/db/firestoreSensorReading';
 import { v4 as uuidv4 } from 'uuid';
-import { logInventoryActionFirestore } from '@/db/firestoreInventory';
+import {
+  logInventoryActionFirestore,
+  getCurrentInventoryFirestore,
+} from '@/db/firestoreInventory';
 
 /* -------------------------------------------------------------------------- */
 /*                                  State Management                            */
@@ -59,6 +62,8 @@ export function useBluetooth() {
   // Track if BT is currently disabling to block all state updates and async operations
   const disablingRef = useRef(false);
   const subscriptionsRef = useRef<Array<any>>([]);
+  const connectionAliveRef = useRef(false);
+  
 
   // Helper: determine if discovered device is a fridge target
   const isFridgeDevice = (device?: Device | null): boolean => {
@@ -147,6 +152,9 @@ export function useBluetooth() {
 
     const subscription = connectedDevice.onDisconnected(() => {
       console.warn('Device disconnection event received');
+
+      connectionAliveRef.current = false;
+
       setConnectedDevice(null);
     });
 
@@ -195,11 +203,24 @@ export function useBluetooth() {
           characteristicUUID,
           (error, characteristic) => {
             // Block all operations if BT is disabling
-            if (disablingRef.current || !connectedDevice || !bluetoothEnabled) {
+            if (error) {
+              // Ignore expected disconnect errors
+              if (
+                error.errorCode === 201 || // DeviceDisconnected
+                error.errorCode === 2 // OperationCancelled
+              ) {
+                return;
+              }
+
+              console.error('Subscription error:', error);
               return;
             }
-            if (error) {
-              console.error('Subscription error:', error);
+
+            if (
+              disablingRef.current ||
+              !connectionAliveRef.current ||
+              !bluetoothEnabled
+            ) {
               return;
             }
             if (!characteristic?.value) return;
@@ -326,6 +347,7 @@ export function useBluetooth() {
                   synced: 0,
                 };
                 try {
+                  
                   await logInventoryActionFirestore(log);
                 } catch (error) {
                   console.error(
@@ -370,8 +392,12 @@ export function useBluetooth() {
       value: string | number,
       dataType: 'int32' | 'float' | 'utf8' = 'int32',
     ) => {
-      if (!connectedDevice) {
-        console.warn('No connected device');
+      if (
+        !connectedDevice ||
+        !connectionAliveRef.current ||
+        disablingRef.current ||
+        !bluetoothEnabled
+      ) {
         return;
       }
 
@@ -390,6 +416,8 @@ export function useBluetooth() {
 
         const base64Value = buffer.toString('base64');
 
+        if (!connectionAliveRef.current) return;
+
         await connectedDevice.writeCharacteristicWithResponseForService(
           serviceUUID,
           characteristicUUID,
@@ -398,10 +426,12 @@ export function useBluetooth() {
 
         console.log('Write success');
       } catch (error) {
-        console.error('Write failed:', error);
+        if (connectionAliveRef.current) {
+          console.error('Write failed:', error);
+        }
       }
     },
-    [connectedDevice],
+    [connectedDevice, bluetoothEnabled],
   );
 
   useEffect(() => {
@@ -409,13 +439,20 @@ export function useBluetooth() {
 
     const SERVICE_UUID = '6a8da328-7627-43a6-a5b4-a4cfb5fd139c';
 
-    const INVENTORY_WRITE_UUID = '12345678-1234-1234-1234-123456789abc';
+    const INVENTORY_WRITE_UUID = 'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
 
     const unsubscribe = firestore()
       .collection('Inventory')
       .doc('fridge_1')
       .onSnapshot(async snapshot => {
-        if (!snapshot.exists()) return;
+        if (
+          !snapshot.exists() ||
+          !connectionAliveRef.current ||
+          disablingRef.current ||
+          !bluetoothEnabled
+        ) {
+          return;
+        }
 
         const count = snapshot.data()?.current_count ?? 0;
 
@@ -430,7 +467,7 @@ export function useBluetooth() {
       });
 
     return unsubscribe;
-  }, [connectedDevice, writeCharacteristic]);
+  }, [connectedDevice, writeCharacteristic, bluetoothEnabled]);
 
   /**
    * Cleanup on unmount: stops any active device scan.
@@ -519,9 +556,11 @@ export function useBluetooth() {
     try {
       const connected = await device.connect();
       await connected.discoverAllServicesAndCharacteristics();
+
+      connectionAliveRef.current = true;
+
       setConnectedDevice(connected);
 
-      // Ensure connected device remains present in the scan results lists.
       addUniqueDevice(setDevices, connected);
       if (isFridgeDevice(connected)) {
         addUniqueDevice(setFridgeDevices, connected);
@@ -546,17 +585,20 @@ export function useBluetooth() {
    * Does not throw errors to avoid disrupting user flow, but logs any issues encountered.
    * Requires: A connected device to be present
    * Note: The onDisconnected listener will also update state when disconnection is detected, so this function primarily initiates the disconnect process.
-   *       Any errors during disconnection are logged but not thrown to avoid disrupting user flow, as disconnection can occur for various reasons (e.g., device out of range) that may not require user intervention.  
-   * 
+   *       Any errors during disconnection are logged but not thrown to avoid disrupting user flow, as disconnection can occur for various reasons (e.g., device out of range) that may not require user intervention.
+   *
    * Steps:
    * 1. Check if a device is currently connected; if not, exit early
    * 2. Attempt to cancel the device connection using the BLE manager
    * 3. If successful, update state to reflect no connected device
    * 4. If an error occurs, log the error for debugging purposes but do not throw it to avoid disrupting user flow
    */
-  
+
   const disconnect = async () => {
     if (!connectedDevice) return;
+
+    connectionAliveRef.current = false;
+
     try {
       await bleManager.cancelDeviceConnection(connectedDevice.id);
       setConnectedDevice(null);
