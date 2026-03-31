@@ -63,7 +63,6 @@ export function useBluetooth() {
   const disablingRef = useRef(false);
   const subscriptionsRef = useRef<Array<any>>([]);
   const connectionAliveRef = useRef(false);
-  
 
   // Helper: determine if discovered device is a fridge target
   const isFridgeDevice = (device?: Device | null): boolean => {
@@ -347,7 +346,6 @@ export function useBluetooth() {
                   synced: 0,
                 };
                 try {
-                  
                   await logInventoryActionFirestore(log);
                 } catch (error) {
                   console.error(
@@ -416,15 +414,13 @@ export function useBluetooth() {
 
         const base64Value = buffer.toString('base64');
 
-        if (!connectionAliveRef.current) return;
-
         await connectedDevice.writeCharacteristicWithResponseForService(
           serviceUUID,
           characteristicUUID,
           base64Value,
         );
 
-        console.log('Write success');
+        console.log('Write success:', value);
       } catch (error) {
         if (connectionAliveRef.current) {
           console.error('Write failed:', error);

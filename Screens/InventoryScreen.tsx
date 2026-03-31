@@ -211,7 +211,7 @@ const InventoryScreen: React.FC = () => {
 
       <InventoryForm
         onSubmit={handleSubmit}
-        // isDisabled={!connectedDevice}
+        isDisabled={!connectedDevice}
       />
 
       <Modal isOpen={showConfirm} onClose={() => setShowConfirm(false)}>
