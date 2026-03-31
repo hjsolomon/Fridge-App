@@ -45,7 +45,7 @@ FridgeApp is a React Native mobile application designed to monitor refrigerator 
 * Inventory minimum limits
 * Grid disconnect detection toggle
 
-## Tech Stack 🛠️
+## Tech Stack 
 
 ### Mobile
 
@@ -101,7 +101,7 @@ Install dependencies:
 npm install
 ```
 
-## Running the App ▶️
+## Running the App 
 
 ### Start Metro
 
