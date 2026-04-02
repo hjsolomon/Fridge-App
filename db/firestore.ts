@@ -1,6 +1,12 @@
 import firestore from '@react-native-firebase/firestore';
 import { Platform } from 'react-native';
 
+if (!firestore().app) {
+  throw new Error(
+    "Firebase not configured. Follow README Firebase setup."
+  );
+}
+
 const db = firestore();
 
 if (__DEV__) {

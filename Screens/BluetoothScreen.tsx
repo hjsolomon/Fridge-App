@@ -183,23 +183,6 @@ const BluetoothScreen: React.FC = () => {
               }}
             />
           </Box>
-          {/* Connection Status */}
-          <Text color="white" textAlign="center">
-            {connectedDevice
-              ? `Connected to ${connectedDevice.name || 'Unnamed Device'}`
-              : 'No device connected'}
-          </Text>
-          {/* Real-time Characteristic Data */}
-          <Text color="white" textAlign="center" mt="$2">
-            {tempCharacteristicData
-              ? `Temperature: ${tempCharacteristicData}°C`
-              : 'Waiting for temperature data...'}
-          </Text>
-          <Text color="white" textAlign="center" mt="$2">
-            {vaccineCharacteristicData
-              ? `Vaccine Count: ${vaccineCharacteristicData}`
-              : 'Waiting for vaccine count data...'}
-          </Text>
           {/* Disconnect Button */}
           {connectedDevice && (
             <Button
