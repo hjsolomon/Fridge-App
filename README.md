@@ -130,4 +130,36 @@ Run:
 npm run ios
 ```
 
+# Firebase Setup (Required)
+
+This project does NOT include Firebase credentials.
+
+To run this project you must create your own Firebase project.
+
+## Steps:
+
+1 Create Firebase project:
+https://console.firebase.google.com/
+
+2 Add Android App
+Use package name:
+com.fridgeapp
+
+3 Enable Firestore Database
+
+4 Download google-services.json
+
+5 Place file here:
+android/app/google-services.json
+
+6 Install dependencies:
+```bash
+npm install
+```
+
+7 Run app:
+
+```bash
+npx react-native run-android
+```
 
