@@ -1,8 +1,39 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // Sensor readings: written by the hardware device, read by the app
+    match /SensorReadings/{doc} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Settings: read and written by the app
+    match /Settings/{doc} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Inventory: read and written by the app
+    match /Inventory/{doc} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    match /InventoryLogs/{doc} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Device tokens: written by the app on startup, read only by Cloud Functions (admin SDK bypasses rules)
+    match /DeviceTokens/{doc} {
+      allow read: if false;
+      allow write: if true;
+    }
+
+    // Block everything else
     match /{document=**} {
-      allow read, write: if true;
+      allow read, write: if false;
     }
   }
 }

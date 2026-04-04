@@ -84,3 +84,8 @@ ios/GoogleService-Info.plist
 # Cloud Functions
 functions/node_modules/
 functions/lib/
+
+# Local database and debug logs
+fridge.db
+firestore-debug.log
+*.log
