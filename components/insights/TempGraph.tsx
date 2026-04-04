@@ -75,6 +75,8 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
       pt="$3"
       px="$2"
       rounded="$2xl"
+      borderWidth={1}
+      borderColor="rgba(255,255,255,0.07)"
       style={{
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -93,7 +95,6 @@ const TempGraph: React.FC<TempGraphProps> = ({ tempData }) => {
               fontWeight: '600',
               paddingBottom: spacingS,
             }}
-            pb="$2"
           >
             Temperature Over Time
           </Text>

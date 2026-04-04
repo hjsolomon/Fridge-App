@@ -34,7 +34,6 @@ import { TAB_BAR_HEIGHT } from '@/components/BottomNavigation';
  */
 const SettingsScreen: React.FC = () => {
 
-
   return (
     <Box flex={1} p="$4">
       <ScreenHeader
@@ -47,47 +46,40 @@ const SettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         backgroundColor='transparent'
       >
-        {/* Section Header */}
-        <Text color="white" mb="$4">
-          Notification Preferences
-        </Text>
+        {/* Notification Preferences */}
+        <Text color="white" mb="$4">Notification Preferences</Text>
 
-        {/* Settings Card with Accordions and Dividers */}
         <Box
-          justifyContent="flex-start"
           bg="#282828ff"
           rounded="$2xl"
           py="$5"
           mb="$6"
+          borderWidth={1}
+          borderColor="rgba(255,255,255,0.07)"
         >
-          {/* Temperature Range Selector */}
           <TempRangeSelector />
           <Box mt="$1" height={1} width="90%" bg="#FFFFFF" opacity={0.2} alignSelf="center" mb={16} />
 
-          {/* Battery Level Selector */}
           <BatteryLevelSelector />
           <Box mt="$1" height={1} width="90%" bg="#FFFFFF" opacity={0.2} alignSelf="center" mb={16} />
 
-          {/* Inventory Minimum Selector */}
           <InventoryMinimumSelector />
           <Box mt="$1" height={1} width="90%" bg="#FFFFFF" opacity={0.2} alignSelf="center" mb={16} />
 
-          {/* Grid Disconnect Switch */}
           <GridDisconnectSwitch />
         </Box>
 
-        {/* Section Header */}
-        <Text color="white" mb="$4">
-          About
-        </Text>
+        {/* About */}
+        <Text color="white" mb="$4">About</Text>
 
-        {/* About Card */}
         <Box
           bg="#282828ff"
           rounded="$2xl"
           py="$5"
           px="$5"
           mb="$6"
+          borderWidth={1}
+          borderColor="rgba(255,255,255,0.07)"
         >
           <Text color="white" fontWeight="$semibold" mb="$3">
             WPI Major Qualifying Project
@@ -106,18 +98,17 @@ const SettingsScreen: React.FC = () => {
           <Text color="#FFFFFFCC" fontSize="$sm">• Fiona Gillis</Text>
         </Box>
 
-        {/* Section Header */}
-        <Text color="white" mb="$4">
-          Data & Privacy
-        </Text>
+        {/* Data & Privacy */}
+        <Text color="white" mb="$4">Data & Privacy</Text>
 
-        {/* Privacy Info Card */}
         <Box
           bg="#282828ff"
           rounded="$2xl"
           py="$5"
           px="$5"
           mb="$6"
+          borderWidth={1}
+          borderColor="rgba(255,255,255,0.07)"
         >
           <Text color="white" fontWeight="$semibold" mb="$3">
             How Your Data Is Used

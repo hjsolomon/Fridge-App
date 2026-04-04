@@ -26,7 +26,8 @@ import {
   ModalCloseButton,
 } from '@gluestack-ui/themed';
 import { CircleHelp, X } from 'lucide-react-native';
-import { Dimensions } from 'react-native';
+import { Dimensions, View } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
 
 /* -------------------------------------------------------------------------- */
 /*                             Type Definitions                               */
@@ -109,14 +110,14 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       </Box>
 
       {/* Visual Divider */}
-      <Box
-        mt="$1"
-        height={1}
-        width="100%"
-        bg="#ffffff"
-        opacity={0.7}
-        mb={dividerMarginBottom}
-      />
+      <View style={{ width: '100%', height: 1, marginTop: 4, marginBottom: dividerMarginBottom }}>
+        <LinearGradient
+          colors={['transparent', 'rgba(255,255,255,0.7)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={{ flex: 1 }}
+        />
+      </View>
 
       {/* Info Modal: Shows detailed description */}
       <Modal isOpen={showInfo} onClose={() => setShowInfo(false)}>

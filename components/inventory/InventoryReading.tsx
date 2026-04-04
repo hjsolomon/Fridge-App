@@ -22,6 +22,8 @@ export const InventoryReading: React.FC<InventoryReadingProps> = ({
       justifyContent="center"
       bg="#282828ff"
       rounded="$2xl"
+      borderWidth={1}
+      borderColor="rgba(255,255,255,0.07)"
       style={{
         paddingTop: spacingS,
         paddingBottom: spacingS,
@@ -35,10 +37,7 @@ export const InventoryReading: React.FC<InventoryReadingProps> = ({
       }}
     >
       {/* Label */}
-      <Text
-        color="white"
-        fontSize="$xl"
-      >
+      <Text color="white" fontSize="$xl">
         Current Inventory
       </Text>
 

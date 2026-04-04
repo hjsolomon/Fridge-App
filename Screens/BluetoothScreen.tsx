@@ -15,6 +15,7 @@
 import React, { useEffect } from 'react';
 import { FlatList, Platform } from 'react-native';
 import { Box, Button, ButtonText, Text, Spinner } from '@gluestack-ui/themed';
+import { Bluetooth } from 'lucide-react-native';
 import { ScreenHeader } from '../components/ScreenHeader';
 import { useBluetoothContext } from '../components/bluetooth/BluetoothContext';
 import { useAndroidPermissions } from './../utils/useAndroidPermissions';
@@ -155,33 +156,38 @@ const BluetoothScreen: React.FC = () => {
           </Button>
           {/* Device List: Shows fridge devices with connection status */}
           <Box
-            justifyContent="flex-start"
             bg="#282828ff"
             rounded="$2xl"
-            py="$1"
             mb="$6"
+            borderWidth={1}
+            borderColor="rgba(255,255,255,0.07)"
           >
-            <FlatList
-              data={fridgeDevices}
-              keyExtractor={item => item.id}
-              renderItem={({ item }) => {
-                const isConnected = connectedDevice?.id === item.id;
-
-                return (
-                  <Button
-                    mt="$3"
-                    bg={isConnected ? '#3a783e' : '#282828ff'}
-                    onPress={async () => {
-                      await connect(item);
-                    }}
-                  >
-                    <Text color="white" fontSize="$lg">
-                      {item.name || 'Unnamed Device'}
-                    </Text>
-                  </Button>
-                );
-              }}
-            />
+              <FlatList
+                data={fridgeDevices}
+                keyExtractor={item => item.id}
+                scrollEnabled={false}
+                ListEmptyComponent={
+                  <Box alignItems="center" py="$8">
+                    <Bluetooth size={32} color="rgba(255,255,255,0.25)" />
+                    <Text color="#FFFFFFCC" mt="$3" fontSize="$sm">No fridge devices found</Text>
+                    <Text color="rgba(255,255,255,0.4)" mt="$1" fontSize="$xs">Tap "Scan for Devices" to search</Text>
+                  </Box>
+                }
+                renderItem={({ item }) => {
+                  const isConnected = connectedDevice?.id === item.id;
+                  return (
+                    <Button
+                      mt="$3"
+                      bg={isConnected ? '#3a783e' : 'transparent'}
+                      onPress={async () => { await connect(item); }}
+                    >
+                      <Text color="white" fontSize="$lg">
+                        {item.name || 'Unnamed Device'}
+                      </Text>
+                    </Button>
+                  );
+                }}
+              />
           </Box>
           {/* Disconnect Button */}
           {connectedDevice && (

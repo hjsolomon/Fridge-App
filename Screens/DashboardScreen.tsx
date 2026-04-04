@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
+import { Clock, Thermometer } from 'lucide-react-native';
 
 import { ScreenHeader } from '../components/ScreenHeader';
 import TempGraph from '../components/insights/TempGraph';
@@ -54,10 +55,7 @@ const DashboardScreen: React.FC = () => {
 
   const metricFontLarge = Math.max(20, Math.round(base * 0.038));
   const metricFontMedium = Math.max(10, Math.round(base * 0.02));
-  const cardPaddingTop = Math.round(base * 0.01);
-  const spacingS = Math.round(base * 0.01);
   const spacingXS = Math.round(base * 0.005);
-  const screenPadding = Math.round(base * 0.02);
 
   /* ---------------------- Firestore Real-time Listeners -------------------- */
   useEffect(() => {
@@ -113,26 +111,25 @@ const DashboardScreen: React.FC = () => {
 
   /* ----------------------------- UI Rendering ------------------------------ */
   return (
-    <Box flex={1} style={{ padding: screenPadding }}>
+    <Box flex={1} p="$4">
       <ScreenHeader
         title="Insights"
         infoText="The Insights screen provides an overview of recent refrigerator performance. Here you can view graphs of temperature trends over time and track the time since the last update."
       />
 
       {/* Graph */}
-      <Box style={{ marginBottom: spacingS }}>
+      <Box mb="$4">
         <TempGraph tempData={tempData} />
       </Box>
 
       {/* TIME SINCE UPDATE */}
       <Box
-        alignItems="center"
-        justifyContent="center"
         bg="#282828ff"
         rounded="$2xl"
+        mb="$4"
+        borderWidth={1}
+        borderColor="rgba(255,255,255,0.07)"
         style={{
-          paddingTop: cardPaddingTop,
-          marginVertical: spacingS,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.25,
@@ -140,38 +137,29 @@ const DashboardScreen: React.FC = () => {
           elevation: 20,
         }}
       >
-        <Text
-          color="white"
-          style={{
-            fontSize: metricFontMedium,
-            fontWeight: '600',
-            paddingBottom: spacingXS,
-          }}
-        >
-          Time Since Last Update
-        </Text>
-
-        <Text
-          color="white"
-          style={{
-            fontSize: metricFontLarge,
-            fontWeight: '700',
-            paddingBottom: spacingS,
-          }}
-        >
-          {timeSinceUpdate || 'Waiting...'}
-        </Text>
+        <Box flexDirection="row" alignItems="center" px="$5" py="$4">
+          <Box p="$3" bg="rgba(93,181,101,0.15)" rounded="$xl" mr="$4">
+            <Clock size={22} color="#5DB565" />
+          </Box>
+          <Box>
+            <Text color="white" style={{ fontSize: metricFontMedium, fontWeight: '600', marginBottom: spacingXS }}>
+              Time Since Last Update
+            </Text>
+            <Text color="white" style={{ fontSize: metricFontLarge, fontWeight: '700' }}>
+              {timeSinceUpdate || 'Waiting...'}
+            </Text>
+          </Box>
+        </Box>
       </Box>
 
       {/* LATEST TEMPERATURE */}
       <Box
-        alignItems="center"
-        justifyContent="center"
         bg="#282828ff"
         rounded="$2xl"
+        mb="$4"
+        borderWidth={1}
+        borderColor="rgba(255,255,255,0.07)"
         style={{
-          paddingTop: cardPaddingTop,
-          marginVertical: spacingS,
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 4 },
           shadowOpacity: 0.25,
@@ -179,27 +167,19 @@ const DashboardScreen: React.FC = () => {
           elevation: 20,
         }}
       >
-        <Text
-          color="white"
-          style={{
-            fontSize: metricFontMedium,
-            fontWeight: '500',
-            paddingBottom: spacingXS,
-          }}
-        >
-          Current Temperature
-        </Text>
-
-        <Text
-          color="white"
-          style={{
-            fontSize: metricFontLarge,
-            fontWeight: '700',
-            paddingBottom: spacingS,
-          }}
-        >
-          {latestTemp !== null ? `${latestTemp.toFixed(1)}°C` : '—'}
-        </Text>
+        <Box flexDirection="row" alignItems="center" px="$5" py="$4">
+          <Box p="$3" bg="rgba(93,181,101,0.15)" rounded="$xl" mr="$4">
+            <Thermometer size={22} color="#5DB565" />
+          </Box>
+          <Box>
+            <Text color="white" style={{ fontSize: metricFontMedium, fontWeight: '500', marginBottom: spacingXS }}>
+              Current Temperature
+            </Text>
+            <Text color="white" style={{ fontSize: metricFontLarge, fontWeight: '700' }}>
+              {latestTemp !== null ? `${latestTemp.toFixed(1)}°C` : '—'}
+            </Text>
+          </Box>
+        </Box>
       </Box>
     </Box>
   );

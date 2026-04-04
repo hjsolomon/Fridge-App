@@ -41,6 +41,8 @@ const InventoryGraph: React.FC<InventoryGraphProps> = ({ inventoryData }) => {
       bg="#282828ff"
       pt="$3"
       rounded="$2xl"
+      borderWidth={1}
+      borderColor="rgba(255,255,255,0.07)"
       style={{
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
