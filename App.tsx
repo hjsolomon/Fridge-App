@@ -5,9 +5,11 @@ import { config } from '@gluestack-ui/config/src/gluestack-ui.config';
 import { createTables, insertInitialFridge } from './db/database';
 // import { startSensorSimulator } from './utils/SensorSimulator';
 import { BluetoothProvider } from './components/bluetooth/BluetoothContext';
+import { usePushNotifications } from './utils/usePushNotifications';
 
 const App = () => {
   const [dbReady, setDbReady] = useState(false);
+  usePushNotifications();
   useEffect(() => {
     // startSensorSimulator();
     const initDatabase = async () => {

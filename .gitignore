@@ -80,3 +80,7 @@ android/app/google-services.json
 ios/GoogleService-Info.plist
 .firebaserc
 .env
+
+# Cloud Functions
+functions/node_modules/
+functions/lib/
