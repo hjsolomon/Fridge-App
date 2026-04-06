@@ -7,12 +7,12 @@ const db = admin.firestore();
 const FRIDGE_ID = 'fridge_1';
 
 /**
- * Runs every 15 minutes.
+ * Runs every 5 minutes.
  * Reads the current temperature from Firestore and compares it against
  * the safe range stored in Settings. Sends an FCM push notification to
  * all registered device tokens if the temperature is out of range.
  */
-export const checkTemperatureAlert = onSchedule('every 15 minutes', async () => {
+export const checkTemperatureAlert = onSchedule('every 5 minutes', async () => {
   // 1. Read temperature range from settings
   const settingsSnap = await db.doc(`Settings/${FRIDGE_ID}`).get();
   const settings = settingsSnap.data();

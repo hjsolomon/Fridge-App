@@ -162,6 +162,6 @@ npm install
 npx react-native run-android
 ```
 
-### WPI Major Qualifying Project
+# WPI Major Qualifying Project
 
 This application was developed as part of a Major Qualifying Project (MQP) at Worcester Polytechnic Institute (WPI). 
