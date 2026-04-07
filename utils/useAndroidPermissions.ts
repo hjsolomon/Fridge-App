@@ -54,21 +54,28 @@ const PERMISSIONS_REQUEST = [
 ];
 
 /**
- * hasAnyDenied
- * -------------
- * Returns `true` if any of the managed permissions have a `DENIED` result,
- * meaning the user saw the dialog but explicitly rejected it (not "don't ask again").
+ * areAllGranted
+ * --------------
+ * Returns `true` only when every managed permission has a `GRANTED` result.
  *
  * @param res - The response map from `PermissionsAndroid.requestMultiple`.
  */
-const hasAnyDenied = (res: PermissionsAndroidResponse) => {
-  for (let i = 0; i < PERMISSIONS_REQUEST.length; i++) {
-    if (res[PERMISSIONS_REQUEST[i]] === PermissionsAndroid.RESULTS.DENIED) {
-      return true;
-    }
-  }
-  return false;
-};
+const areAllGranted = (res: PermissionsAndroidResponse) =>
+  PERMISSIONS_REQUEST.every(p => res[p] === PermissionsAndroid.RESULTS.GRANTED);
+
+/**
+ * hasAnyPermanentlyDenied
+ * ------------------------
+ * Returns `true` if any managed permission has a `NEVER_ASK_AGAIN` result,
+ * meaning the system will no longer show the request dialog and the user must
+ * grant the permission manually via the device's Settings screen.
+ *
+ * @param res - The response map from `PermissionsAndroid.requestMultiple`.
+ */
+const hasAnyPermanentlyDenied = (res: PermissionsAndroidResponse) =>
+  PERMISSIONS_REQUEST.some(
+    p => res[p] === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN,
+  );
 
 /**
  * useAndroidPermissions
@@ -97,6 +104,7 @@ export const useAndroidPermissions = (): THook => {
 
     if (locationGranted && bluetoothGranted) {
       setGranted(true);
+      setShouldOpenSettings(false);
     } else {
       setGranted(false);
     }
@@ -125,15 +133,9 @@ export const useAndroidPermissions = (): THook => {
     setWaiting(true);
     try {
       const res = await PermissionsAndroid.requestMultiple(PERMISSIONS_REQUEST);
-      const allGranted = !hasAnyDenied(res);
+      const allGranted = areAllGranted(res);
       setGranted(allGranted);
-
-      // If not all granted and no dialog was shown (user denied with "don't ask again")
-      if (!allGranted && !hasAnyDenied(res)) {
-        setShouldOpenSettings(true);
-      } else {
-        setShouldOpenSettings(false);
-      }
+      setShouldOpenSettings(!allGranted && hasAnyPermanentlyDenied(res));
     } catch (err) {
       console.warn(err);
       setGranted(false);

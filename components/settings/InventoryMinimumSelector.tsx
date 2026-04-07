@@ -88,10 +88,10 @@ const InventoryMinimumSelector: React.FC<InventoryMinimumSelectorProps> = ({
       width="100%"
       bg="transparent"
       onValueChange={value => {
-        setOpen(value.includes('battery-level'));
+        setOpen(value.includes('inventory-level'));
       }}
     >
-      <AccordionItem value="battery-level" bg="#282828ff" rounded="$2xl">
+      <AccordionItem value="inventory-level" bg="#282828ff" rounded="$2xl">
         {/* Accordion Header with Title and Chevron */}
         <AccordionHeader>
           <AccordionTrigger>
