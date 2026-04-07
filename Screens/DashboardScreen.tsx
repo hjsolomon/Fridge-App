@@ -1,3 +1,19 @@
+/**
+ * DashboardScreen.tsx
+ * --------------------
+ * Insights screen that visualises recent fridge temperature history and shows
+ * a summary of the most recent sensor reading.
+ *
+ * Displays:
+ * - Temperature trend line chart (last 10 readings via TempGraph).
+ * - Time since the last sensor update.
+ * - Current temperature from the latest reading.
+ *
+ * Data source: Two concurrent Firestore real-time listeners —
+ * `getCurrentReadingFirestore` for the latest reading and
+ * `getSensorLogsFirestore` for historical data. Both are cleaned up on unmount.
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
@@ -26,6 +42,15 @@ interface TempData {
 /*                              Helper Functions                              */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * formatToMonthDay
+ * -----------------
+ * Converts an ISO 8601 timestamp string into a compact `M/D H:MM` label
+ * suitable for chart x-axis ticks.
+ *
+ * @param isoString - ISO 8601 date string (e.g. `"2024-06-01T14:05:00.000Z"`).
+ * @returns A formatted string like `"6/1 14:05"`.
+ */
 const formatToMonthDay = (isoString: string) => {
   const date = new Date(isoString);
 
@@ -42,6 +67,13 @@ const formatToMonthDay = (isoString: string) => {
 /*                         Component Definition                                */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * DashboardScreen
+ * ----------------
+ * Screen component that subscribes to sensor log history and the latest reading
+ * on mount, processes the data into chart-ready format, and renders insights.
+ * All Firestore listeners are cleaned up on unmount.
+ */
 const DashboardScreen: React.FC = () => {
   /* -------------------------- State Management ---------------------------- */
   const [tempData, setTempData] = useState<TempData[]>([]);

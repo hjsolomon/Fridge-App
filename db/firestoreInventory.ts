@@ -1,13 +1,35 @@
+/**
+ * firestoreInventory.ts
+ * ----------------------
+ * Firestore service functions for inventory data.
+ *
+ * Collections used:
+ * - `Inventory/{fridgeId}`   — Document storing the current vial count for a fridge.
+ * - `InventoryLogs`          — Collection of all inventory action records (add/remove/set).
+ *
+ * All listener functions return an `unsubscribe` callback; call it on component
+ * unmount to prevent memory leaks.
+ */
+
 import firestore from '@react-native-firebase/firestore';
 import { InventoryLog } from '../db/database';
 
-// References
+/** Returns a Firestore DocumentReference for a fridge's inventory summary. */
 const inventoryRef = (fridgeId: string) =>
   firestore().collection('Inventory').doc(fridgeId);
 
 const logsRef = firestore().collection('InventoryLogs');
 
-// Fetch logs
+/**
+ * getInventoryLogsFirestore
+ * --------------------------
+ * Subscribes to real-time inventory action logs for a specific fridge, ordered
+ * chronologically (oldest first), limited to the 20 most recent entries.
+ *
+ * @param fridgeId - The ID of the fridge to fetch logs for.
+ * @param callback - Called with the updated array of InventoryLog records on each change.
+ * @returns An unsubscribe function to detach the Firestore listener.
+ */
 export function getInventoryLogsFirestore(
   fridgeId: string,
   callback: (logs: InventoryLog[]) => void,
@@ -24,7 +46,16 @@ export function getInventoryLogsFirestore(
   return unsubscribe;
 }
 
-// Fetch Current Inventory
+/**
+ * getCurrentInventoryFirestore
+ * -----------------------------
+ * Subscribes to real-time updates for a fridge's current vial count.
+ * Returns 0 if the inventory document does not yet exist.
+ *
+ * @param fridgeId - The ID of the fridge to watch.
+ * @param callback - Called with the current vial count whenever it changes.
+ * @returns An unsubscribe function to detach the Firestore listener.
+ */
 export function getCurrentInventoryFirestore(
   fridgeId: string,
   callback: (count: number) => void,
@@ -40,6 +71,20 @@ export function getCurrentInventoryFirestore(
   return unsubscribe;
 }
 
+/**
+ * logInventoryActionFirestore
+ * ----------------------------
+ * Writes an inventory action log to Firestore and atomically updates the
+ * fridge's current vial count.
+ *
+ * Action semantics:
+ * - `'add'`    — Increments current_count by log.count.
+ * - `'remove'` — Decrements current_count by log.count.
+ * - `'set'`    — Overwrites current_count with log.count (no-op if already equal,
+ *                checked both before and inside the transaction to guard race conditions).
+ *
+ * @param log - The InventoryLog record describing the action to record.
+ */
 export async function logInventoryActionFirestore(log: InventoryLog) {
   const invRef = inventoryRef(log.fridge_id);
 

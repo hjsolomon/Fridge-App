@@ -1,11 +1,33 @@
+/**
+ * InventoryReading.tsx
+ * ---------------------
+ * Displays the current vaccine vial count as a styled card on the Inventory screen.
+ *
+ * Sizing is responsive — font size and spacing are calculated as a percentage of
+ * the device's screen height so the card looks consistent across device sizes.
+ */
+
 import React from 'react';
 import { Box, Text } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 
+/**
+ * InventoryReadingProps
+ * ----------------------
+ * @prop inventory - The current number of vaccine vials in the fridge.
+ */
 type InventoryReadingProps = {
   inventory: number;
 };
 
+/**
+ * InventoryReading
+ * -----------------
+ * Card component that shows the current inventory count with a label.
+ * Renders as a dark rounded box with subtle shadow styling.
+ *
+ * @param inventory - Current vial count to display.
+ */
 export const InventoryReading: React.FC<InventoryReadingProps> = ({
   inventory,
 }) => {

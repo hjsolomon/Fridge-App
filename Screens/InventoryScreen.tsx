@@ -1,3 +1,20 @@
+/**
+ * InventoryScreen.tsx
+ * --------------------
+ * Screen for viewing and managing vaccine vial inventory.
+ *
+ * Features:
+ * - Displays the current vial count (via InventoryReading).
+ * - Shows an inventory trend chart (via InventoryGraph).
+ * - Provides an add/remove form (via InventoryForm), disabled when no BLE device is connected.
+ * - Validates actions (cannot remove more than available; cannot exceed 600 vial capacity).
+ * - Shows a confirmation modal before committing any inventory change.
+ *
+ * Data source: Two concurrent Firestore real-time listeners —
+ * `getCurrentInventoryFirestore` for the live count and
+ * `getInventoryLogsFirestore` for historical chart data. Both are cleaned up on unmount.
+ */
+
 import React, { useState, useEffect } from 'react';
 import {
   Box,
@@ -35,16 +52,39 @@ import { useBluetoothContext } from '../components/bluetooth/BluetoothContext';
 
 const FRIDGE_ID = 'fridge_1';
 
+/**
+ * InventoryData
+ * --------------
+ * Processed data point used to build the inventory trend chart.
+ *
+ * @prop timestamp - Formatted date label (e.g. `"6/1"`).
+ * @prop count     - Running vial count at this point in time.
+ */
 interface InventoryData {
   timestamp: string;
   count: number;
 }
 
+/**
+ * formatToMonthDay
+ * -----------------
+ * Converts an ISO 8601 timestamp to a short `M/D` label for chart x-axis ticks.
+ *
+ * @param isoString - ISO 8601 date string.
+ * @returns A formatted string like `"6/1"`.
+ */
 const formatToMonthDay = (isoString: string) => {
   const date = new Date(isoString);
   return `${date.getMonth() + 1}/${date.getDate()}`;
 };
 
+/**
+ * InventoryScreen
+ * ----------------
+ * Main inventory management screen. Subscribes to Firestore on mount for
+ * real-time data, derives a running-count history for the chart, and exposes
+ * add/remove actions gated behind a confirmation modal.
+ */
 const InventoryScreen: React.FC = () => {
   const { connectedDevice } = useBluetoothContext();
 
@@ -127,6 +167,16 @@ const InventoryScreen: React.FC = () => {
   /* SUBMIT ACTION                                                    */
   /* ---------------------------------------------------------------- */
 
+  /**
+   * handleSubmit
+   * -------------
+   * Validates an inventory action submitted from InventoryForm and, if valid,
+   * stages it as a `pendingAction` and opens the confirmation modal.
+   *
+   * @param action    - `'Add'` or `'Remove'`.
+   * @param count     - Number of vials to add or remove.
+   * @param lotNumber - Optional lot number associated with the action.
+   */
   const handleSubmit = (
     action: 'Add' | 'Remove',
     count: number,
@@ -160,6 +210,12 @@ const InventoryScreen: React.FC = () => {
   /* CONFIRM SUBMISSION                                               */
   /* ---------------------------------------------------------------- */
 
+  /**
+   * confirmSubmission
+   * ------------------
+   * Commits the staged `pendingAction` to Firestore. Guards against double-submission
+   * via `isSubmitting`. Always resets modal and pending state in the `finally` block.
+   */
   const confirmSubmission = async () => {
     if (!pendingAction || isSubmitting) return;
 

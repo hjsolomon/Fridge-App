@@ -1,3 +1,16 @@
+/**
+ * HomeScreen.tsx
+ * ---------------
+ * Displays a real-time overview of the fridge's current status, including:
+ * - Current temperature (via TemperatureReading).
+ * - Active power source(s): Solar, Grid, or Battery (via PowerSourceIcon).
+ * - Battery level percentage (via BatteryReading).
+ *
+ * Data source: Firestore real-time listener via `getCurrentReadingFirestore`.
+ * The power source shown is randomly simulated for demo purposes; in production
+ * this would be driven by a dedicated field on the SensorReading document.
+ */
+
 import React, { useEffect, useState } from 'react';
 import { Box, Text, HStack } from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
@@ -18,6 +31,13 @@ const FRIDGE_ID = 'fridge_1';
 /*                         Component Definition                                */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * HomeScreen
+ * -----------
+ * Screen component that subscribes to the latest fridge sensor reading on mount
+ * and renders temperature, power source icons, and a battery level bar.
+ * The Firestore listener is cleaned up on unmount.
+ */
 const HomeScreen: React.FC = () => {
   /* -------------------------- State Management ---------------------------- */
   const [temp, setTemp] = useState<number>(2.0);
