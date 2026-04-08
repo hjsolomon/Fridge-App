@@ -15,7 +15,19 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { Box, Text } from '@gluestack-ui/themed';
+import {
+  Box,
+  Text,
+  Button,
+  ButtonText,
+  Modal,
+  ModalBackdrop,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+  ModalCloseButton,
+} from '@gluestack-ui/themed';
 import { Dimensions } from 'react-native';
 import { Clock, Thermometer } from 'lucide-react-native';
 
@@ -25,9 +37,14 @@ import TempGraph from '../components/insights/TempGraph';
 import {
   getCurrentReadingFirestore,
   getSensorLogsFirestore,
+  getSensorReadingsForExportFirestore,
 } from '@/db/firestoreSensorReading';
+import RNFS from 'react-native-fs';
+import Papa from 'papaparse';
 
 const FRIDGE_ID = 'fridge_1';
+const { width } = Dimensions.get('window');
+const buttonWidth = width * 0.9; // 90% of screen width
 
 /* -------------------------------------------------------------------------- */
 /*                             Type Definitions                               */
@@ -80,6 +97,14 @@ const DashboardScreen: React.FC = () => {
   const [latestTemp, setLatestTemp] = useState<number | null>(null);
   const [timeSinceUpdate, setTimeSinceUpdate] =
     useState<string>('Calculating...');
+
+  const [showModal, setShowModal] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportResult, setExportResult] = useState<{
+    success: boolean;
+    path?: string;
+    error?: string;
+  } | null>(null);
 
   /* --------------------------- Responsive Sizing --------------------------- */
   const { height } = Dimensions.get('window');
@@ -141,6 +166,46 @@ const DashboardScreen: React.FC = () => {
     };
   }, []);
 
+  /* ----------------------------- CSV Export -------------------------------- */
+
+  const handleExport = async () => {
+    setExporting(true);
+    setExportResult(null);
+    try {
+      const readings = await getSensorReadingsForExportFirestore(FRIDGE_ID);
+
+      const csv = Papa.unparse(
+        readings.map(r => ({
+          reading_id: r.reading_id,
+          fridge_id: r.fridge_id,
+          timestamp: r.timestamp,
+          temperature_c: r.temperature,
+          battery_level: r.battery_level,
+        })),
+      );
+
+      const artifactsDir = `${RNFS.DocumentDirectoryPath}/artifacts`;
+      const dirExists = await RNFS.exists(artifactsDir);
+      if (!dirExists) {
+        await RNFS.mkdir(artifactsDir);
+      }
+
+      const now = new Date();
+      const stamp = now
+        .toISOString()
+        .replace(/[:.]/g, '-')
+        .slice(0, 19);
+      const filePath = `${artifactsDir}/sensor_readings_${stamp}.csv`;
+
+      await RNFS.writeFile(filePath, csv, 'utf8');
+      setExportResult({ success: true, path: filePath });
+    } catch (err: any) {
+      setExportResult({ success: false, error: err?.message ?? 'Unknown error' });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   /* ----------------------------- UI Rendering ------------------------------ */
   return (
     <Box flex={1} p="$4">
@@ -174,10 +239,20 @@ const DashboardScreen: React.FC = () => {
             <Clock size={22} color="#5DB565" />
           </Box>
           <Box>
-            <Text color="white" style={{ fontSize: metricFontMedium, fontWeight: '600', marginBottom: spacingXS }}>
+            <Text
+              color="white"
+              style={{
+                fontSize: metricFontMedium,
+                fontWeight: '600',
+                marginBottom: spacingXS,
+              }}
+            >
               Time Since Last Update
             </Text>
-            <Text color="white" style={{ fontSize: metricFontLarge, fontWeight: '700' }}>
+            <Text
+              color="white"
+              style={{ fontSize: metricFontLarge, fontWeight: '700' }}
+            >
               {timeSinceUpdate || 'Waiting...'}
             </Text>
           </Box>
@@ -204,15 +279,45 @@ const DashboardScreen: React.FC = () => {
             <Thermometer size={22} color="#5DB565" />
           </Box>
           <Box>
-            <Text color="white" style={{ fontSize: metricFontMedium, fontWeight: '500', marginBottom: spacingXS }}>
+            <Text
+              color="white"
+              style={{
+                fontSize: metricFontMedium,
+                fontWeight: '500',
+                marginBottom: spacingXS,
+              }}
+            >
               Current Temperature
             </Text>
-            <Text color="white" style={{ fontSize: metricFontLarge, fontWeight: '700' }}>
+            <Text
+              color="white"
+              style={{ fontSize: metricFontLarge, fontWeight: '700' }}
+            >
               {latestTemp !== null ? `${latestTemp.toFixed(1)}°C` : '—'}
             </Text>
           </Box>
         </Box>
       </Box>
+      {/* Button to export CSV */}
+      <Button
+        bg="#3a783e"
+        rounded="$3xl"
+        alignSelf="center"
+        justifyContent="center"
+        alignItems="center"
+        mt="$1"
+        px="$6" // horizontal padding
+        py="$2" // vertical padding
+        onPress={() => setShowModal(true)}
+        style={{
+          width: buttonWidth,
+          minHeight: width * 0.1, // gives more vertical space without clipping text
+        }}
+      >
+        <ButtonText size="lg" fontWeight="$normal" color="white">
+          Export CSV
+        </ButtonText>
+      </Button>
     </Box>
   );
 };

@@ -74,6 +74,27 @@ export function getCurrentReadingFirestore(
 }
 
 /**
+ * getSensorReadingsForExportFirestore
+ * -------------------------------------
+ * Performs a one-time fetch of up to 1000 sensor readings for a fridge,
+ * ordered oldest-first so the exported CSV is chronologically ascending.
+ * Uses `.get()` rather than `onSnapshot` — no live listener is created.
+ *
+ * @param fridgeId - The ID of the fridge to export readings for.
+ * @returns Resolved array of SensorReading records (up to 1000).
+ */
+export async function getSensorReadingsForExportFirestore(
+  fridgeId: string,
+): Promise<SensorReading[]> {
+  const snapshot = await sensorReadingsRef
+    .where('fridge_id', '==', fridgeId)
+    .orderBy('timestamp', 'asc')
+    .limit(1000)
+    .get();
+  return snapshot.docs.map(doc => doc.data() as SensorReading);
+}
+
+/**
  * logSensorReadingFirestore
  * --------------------------
  * Writes a single sensor reading to Firestore. The document is keyed by
