@@ -41,9 +41,9 @@ const FRIDGE_ID = 'fridge_1';
 const HomeScreen: React.FC = () => {
   /* -------------------------- State Management ---------------------------- */
   const [temp, setTemp] = useState<number>(2.0);
-  // const [solar, setSolar] = useState(true);
-  // const [grid, setGrid] = useState(false);
-  // const [battery, setBattery] = useState(false);
+  const [solar, setSolar] = useState(false);
+  const [grid, setGrid] = useState(false);
+  const [battery, setBattery] = useState(false);
   const [powerLevel, setPowerLevel] = useState<number>(3);
 
   /* --------------------------- Responsive Sizing --------------------------- */
@@ -62,11 +62,14 @@ const HomeScreen: React.FC = () => {
         if (reading) {
           setTemp(reading.temperature);
           setPowerLevel(reading.battery_level ?? 0);
+          setSolar(reading.solar ?? false);
+          setGrid(reading.grid ?? false);
+          setBattery(reading.battery ?? false);
 
           // // Simulate power source rotation (demo)
           // const rotation = ['solar', 'grid', 'battery'];
           // const random = rotation[Math.floor(Math.random() * rotation.length)];
-
+          
           // setSolar(random === 'solar');
           // setGrid(random === 'grid');
           // setBattery(random === 'battery');
@@ -108,17 +111,17 @@ const HomeScreen: React.FC = () => {
         <PowerSourceIcon
           icon={<Sun size={powerIconSize} color="white" />}
           label="Solar"
-          // active={solar}
+          active={solar}
         />
         <PowerSourceIcon
           icon={<Zap size={powerIconSize} color="white" />}
           label="Grid"
-          // active={grid}
+          active={grid}
         />
         <PowerSourceIcon
           icon={<Battery size={powerIconSize} color="white" />}
           label="Battery"
-          // active={battery}
+          active={battery}
         />
       </HStack>
 

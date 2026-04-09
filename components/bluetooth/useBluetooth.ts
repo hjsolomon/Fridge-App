@@ -628,24 +628,39 @@ export function useBluetooth() {
    * Throws: Error if connection or discovery fails
    */
   const connect = async (device: Device) => {
-    try {
-      const connected = await device.connect();
-      await connected.discoverAllServicesAndCharacteristics();
+    const MAX_RETRIES = 3;
+    const CONNECT_TIMEOUT_MS = 30000;
+    let lastError: unknown;
 
-      connectionAliveRef.current = true;
+    // Android BLE stack conflicts when scanning and connecting simultaneously.
+    // Stop any active scan before attempting connection.
+    bleManager.stopDeviceScan();
+    setScanning(false);
 
-      setConnectedDevice(connected);
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      try {
+        const connected = await device.connect({ timeout: CONNECT_TIMEOUT_MS });
+        await connected.discoverAllServicesAndCharacteristics();
 
-      addUniqueDevice(setDevices, connected);
-      if (isFridgeDevice(connected)) {
-        addUniqueDevice(setFridgeDevices, connected);
+        connectionAliveRef.current = true;
+        setConnectedDevice(connected);
+
+        addUniqueDevice(setDevices, connected);
+        if (isFridgeDevice(connected)) {
+          addUniqueDevice(setFridgeDevices, connected);
+        }
+
+        return connected;
+      } catch (e) {
+        lastError = e;
+        console.warn(`Connection attempt ${attempt}/${MAX_RETRIES} failed:`, e);
+        if (attempt < MAX_RETRIES) {
+          await bleManager.cancelDeviceConnection(device.id).catch(() => {});
+        }
       }
-
-      return connected;
-    } catch (e) {
-      console.warn('Connection failed:', e);
-      throw e;
     }
+
+    throw lastError;
   };
 
   /* -------------------------------------------------------------------- */
