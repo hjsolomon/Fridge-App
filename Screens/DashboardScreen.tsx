@@ -306,18 +306,64 @@ const DashboardScreen: React.FC = () => {
         justifyContent="center"
         alignItems="center"
         mt="$1"
-        px="$6" // horizontal padding
-        py="$2" // vertical padding
+        px="$6"
+        py="$2"
         onPress={() => setShowModal(true)}
         style={{
           width: buttonWidth,
-          minHeight: width * 0.1, // gives more vertical space without clipping text
+          minHeight: width * 0.1,
         }}
       >
         <ButtonText size="lg" fontWeight="$normal" color="white">
           Export CSV
         </ButtonText>
       </Button>
+
+      {/* CSV Export Modal */}
+      <Modal isOpen={showModal} onClose={() => { setShowModal(false); setExportResult(null); }}>
+        <ModalBackdrop />
+        <ModalContent bg="#282828ff">
+          <ModalHeader>
+            <Text color="white" fontWeight="$bold" size="lg">Export Sensor Data</Text>
+            <ModalCloseButton />
+          </ModalHeader>
+          <ModalBody>
+            {exportResult === null && !exporting && (
+              <Text color="white">Export all sensor readings to a CSV file saved on this device?</Text>
+            )}
+            {exporting && (
+              <Text color="white">Exporting...</Text>
+            )}
+            {exportResult?.success && (
+              <Text color="#5DB565">Saved to:{'\n'}{exportResult.path}</Text>
+            )}
+            {exportResult?.success === false && (
+              <Text color="#e05a5a">Export failed: {exportResult.error}</Text>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            {!exportResult && (
+              <Button
+                bg="#3a783e"
+                rounded="$xl"
+                onPress={handleExport}
+                isDisabled={exporting}
+                mr="$3"
+              >
+                <ButtonText color="white">{exporting ? 'Exporting...' : 'Export'}</ButtonText>
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              rounded="$xl"
+              borderColor="rgba(255,255,255,0.2)"
+              onPress={() => { setShowModal(false); setExportResult(null); }}
+            >
+              <ButtonText color="white">{exportResult?.success ? 'Done' : 'Cancel'}</ButtonText>
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
     </Box>
   );
 };
