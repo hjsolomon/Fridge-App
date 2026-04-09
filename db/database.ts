@@ -36,8 +36,10 @@ export interface SensorReading {
   timestamp: string;
   synced?: number;
   battery_level: number;
+  grid: boolean;
+  solar: boolean;
+  battery: boolean;
 }
-
 
 export interface Inventory {
   fridge_id: string;
@@ -97,7 +99,10 @@ export const getDB = async () => {
  * @param params - optional parameters for the query
  * @returns first SQL result set
  */
-export const executeSql = async (sql: string, params: any[] = []): Promise<any> => {
+export const executeSql = async (
+  sql: string,
+  params: any[] = [],
+): Promise<any> => {
   const db = await getDB();
   try {
     const result = await db.executeSql(sql, params);
@@ -240,7 +245,13 @@ export const insertFridge = async (fridge: Fridge) => {
     await executeSql(
       `INSERT OR REPLACE INTO fridges (fridge_id, name, status, last_sync, battery_level)
        VALUES (?, ?, ?, ?, ?);`,
-      [fridge_id, name ?? null, status ?? null, last_sync ?? null, battery_level ?? null]
+      [
+        fridge_id,
+        name ?? null,
+        status ?? null,
+        last_sync ?? null,
+        battery_level ?? null,
+      ],
     );
   } catch (err) {
     console.error('Failed to insert fridge:', err);
@@ -269,7 +280,10 @@ export const getAllFridges = async (): Promise<Fridge[]> => {
  */
 export const updateFridgeStatus = async (fridge_id: string, status: string) => {
   try {
-    await executeSql(`UPDATE fridges SET status = ? WHERE fridge_id = ?;`, [status, fridge_id]);
+    await executeSql(`UPDATE fridges SET status = ? WHERE fridge_id = ?;`, [
+      status,
+      fridge_id,
+    ]);
   } catch (err) {
     console.error('Failed to update fridge status:', err);
   }
@@ -285,14 +299,21 @@ export const updateFridgeStatus = async (fridge_id: string, status: string) => {
  * Records a new temperature and battery reading for a fridge.
  */
 export const insertSensorReading = async (reading: SensorReading) => {
-  const { reading_id, fridge_id, temperature, timestamp, synced = 0, battery_level = 0 } = reading;
+  const {
+    reading_id,
+    fridge_id,
+    temperature,
+    timestamp,
+    synced = 0,
+    battery_level = 0,
+  } = reading;
 
   try {
     await executeSql(
       `INSERT OR REPLACE INTO sensor_readings
        (reading_id, fridge_id, temperature, timestamp, synced, battery_level)
        VALUES (?, ?, ?, ?, ?, ?);`,
-      [reading_id, fridge_id, temperature, timestamp, synced, battery_level]
+      [reading_id, fridge_id, temperature, timestamp, synced, battery_level],
     );
   } catch (err) {
     console.error('Failed to insert sensor reading:', err);
@@ -305,9 +326,13 @@ export const insertSensorReading = async (reading: SensorReading) => {
  * ----------------------
  * Retrieves sensor readings that have not yet been synced to the server.
  */
-export const getUnsyncedReadings = async (fridge_id: string): Promise<SensorReading[]> => {
+export const getUnsyncedReadings = async (
+  fridge_id: string,
+): Promise<SensorReading[]> => {
   try {
-    const result = await executeSql(`SELECT * FROM sensor_readings WHERE synced = 0;`);
+    const result = await executeSql(
+      `SELECT * FROM sensor_readings WHERE synced = 0;`,
+    );
     return result.rows.raw() as SensorReading[];
   } catch (err) {
     console.error('Failed to get unsynced readings:', err);
@@ -320,7 +345,9 @@ export const getUnsyncedReadings = async (fridge_id: string): Promise<SensorRead
  * ----------------------
  * Retrieves sensor readings that have not yet been synced to the server.
  */
-export const getAllReadings = async (fridge_id: string): Promise<SensorReading[]> => {
+export const getAllReadings = async (
+  fridge_id: string,
+): Promise<SensorReading[]> => {
   try {
     const result = await executeSql(`SELECT * FROM sensor_readings`);
     return result.rows.raw() as SensorReading[];
@@ -329,7 +356,6 @@ export const getAllReadings = async (fridge_id: string): Promise<SensorReading[]
     return [];
   }
 };
-
 
 /**
  * markReadingsAsSynced()
@@ -342,7 +368,7 @@ export const markReadingsAsSynced = async (readingIds: string[]) => {
   try {
     await executeSql(
       `UPDATE sensor_readings SET synced = 1 WHERE reading_id IN (${placeholders});`,
-      readingIds
+      readingIds,
     );
   } catch (err) {
     console.error('Failed to mark readings as synced:', err);
@@ -355,14 +381,16 @@ export const markReadingsAsSynced = async (readingIds: string[]) => {
  * Retrieves the most recent reading for a given fridge.
  */
 export const getLatestSensorReading = async (
-  fridge_id: string
+  fridge_id: string,
 ): Promise<SensorReading | null> => {
   try {
     const result = await executeSql(
       `SELECT * FROM sensor_readings WHERE fridge_id = ? ORDER BY timestamp DESC LIMIT 1;`,
-      [fridge_id]
+      [fridge_id],
     );
-    return result.rows.length > 0 ? (result.rows.item(0) as SensorReading) : null;
+    return result.rows.length > 0
+      ? (result.rows.item(0) as SensorReading)
+      : null;
   } catch (err) {
     console.error('Failed to get latest sensor reading:', err);
     return null;
@@ -401,7 +429,7 @@ export const logInventoryAction = async (log: InventoryLog) => {
     await executeSql(
       `INSERT INTO inventory_log (log_id, fridge_id, action, count, synced)
        VALUES (?, ?, ?, ?, ?);`,
-      [log_id, fridge_id, action, count, synced]
+      [log_id, fridge_id, action, count, synced],
     );
     console.log('Logged inventory action successfully');
   } catch (err) {
@@ -415,11 +443,13 @@ export const logInventoryAction = async (log: InventoryLog) => {
  * -------------------
  * Retrieves the full action history for a given fridge.
  */
-export const getInventoryLogs = async (fridge_id: string): Promise<InventoryLog[]> => {
+export const getInventoryLogs = async (
+  fridge_id: string,
+): Promise<InventoryLog[]> => {
   try {
     const result = await executeSql(
       `SELECT * FROM inventory_log WHERE fridge_id = ? ORDER BY timestamp DESC;`,
-      [fridge_id]
+      [fridge_id],
     );
     console.log('Fetched inventory logs successfully');
     return result.rows.raw() as InventoryLog[];
@@ -444,13 +474,13 @@ export const insertInitialFridge = async () => {
     await executeSql(
       `INSERT OR IGNORE INTO fridges (fridge_id, name, status, last_sync, battery_level)
        VALUES (?, ?, ?, ?, ?);`,
-      ['fridge_1', 'Primary Fridge', 'ok', new Date().toISOString(), 100]
+      ['fridge_1', 'Primary Fridge', 'ok', new Date().toISOString(), 100],
     );
 
     await executeSql(
       `INSERT OR IGNORE INTO inventory (fridge_id, current_count)
        VALUES (?, ?);`,
-      ['fridge_1', 0]
+      ['fridge_1', 0],
     );
 
     console.log('Inserted initial fridge / inventory');

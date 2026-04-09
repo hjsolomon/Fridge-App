@@ -59,6 +59,18 @@ export function useBluetooth() {
     string | null
   >(null);
 
+  // Power source states — default false until a characteristic update is received
+  const [solar, setSolar] = useState(false);
+  const [grid, setGrid] = useState(false);
+  const [battery, setBattery] = useState(false);
+
+  // Refs mirror power source state so the temp callback always reads the latest
+  // value without a stale closure — state alone would capture the value at
+  // subscription time and never update inside the async callback.
+  const solarRef = useRef(false);
+  const gridRef = useRef(false);
+  const batteryRef = useRef(false);
+
   // Track if BT is currently disabling to block all state updates and async operations
   const disablingRef = useRef(false);
   const subscriptionsRef = useRef<Array<any>>([]);
@@ -131,6 +143,9 @@ export function useBluetooth() {
         setConnectedDevice(null);
         setTempCharacteristicData(null);
         setVaccineCharacteristicData(null);
+        setSolar(false);   solarRef.current = false;
+        setGrid(false);    gridRef.current = false;
+        setBattery(false); batteryRef.current = false;
         setBluetoothEnabled(false);
       } else if (enabled) {
         // Reset disabling flag when BT comes back on
@@ -278,6 +293,9 @@ export function useBluetooth() {
 
       setTempCharacteristicData(null);
       setVaccineCharacteristicData(null);
+      setSolar(false);   solarRef.current = false;
+      setGrid(false);    gridRef.current = false;
+      setBattery(false); batteryRef.current = false;
       return;
     }
 
@@ -290,6 +308,12 @@ export function useBluetooth() {
         const TEMP_CHARACTERISTIC_UUID = '96ac696e-aba0-467f-8fd9-910a55394e54';
         const VACCINE_CHARACTERISTIC_UUID =
           'bf83677e-0135-4b7e-9f42-df8d32ad39c9';
+        const SOLAR_CHARACTERISTIC_UUID =
+          '446b6bee-b10b-4a0b-9114-29b86b23f8d8';
+        const GRID_CHARACTERISTIC_UUID =
+          '499d19ec-35b7-450c-88bc-8a9963008879';
+        const BATTERY_SOURCE_CHARACTERISTIC_UUID =
+          '5c51b225-e17e-45fd-b4a9-84a635b71cad';
 
         // Subscribe to temperature updates
         const tempSubscription = await subscribeToCharacteristic(
@@ -308,6 +332,9 @@ export function useBluetooth() {
                   battery_level: 50,
                   timestamp: new Date().toISOString(),
                   synced: 0,
+                  solar: solarRef.current,
+                  grid: gridRef.current,
+                  battery: batteryRef.current,
                 };
                 try {
                   await logSensorReadingFirestore(log);
@@ -361,6 +388,58 @@ export function useBluetooth() {
 
         if (vaccineSubscription && isMounted && !disablingRef.current) {
           subscriptionsRef.current.push(vaccineSubscription);
+        }
+
+        // Subscribe to power source characteristics.
+        // Each is an int32 where non-zero = active. If the characteristic is
+        // absent or fails to subscribe the setter is never called, leaving the
+        // default value of false.
+        const solarSubscription = await subscribeToCharacteristic(
+          SERVICE_UUID,
+          SOLAR_CHARACTERISTIC_UUID,
+          value => {
+            if (isMounted && !disablingRef.current) {
+              const active = parseInt(value, 10) !== 0;
+              solarRef.current = active;
+              setSolar(active);
+            }
+          },
+          'int32',
+        );
+        if (solarSubscription && isMounted && !disablingRef.current) {
+          subscriptionsRef.current.push(solarSubscription);
+        }
+
+        const gridSubscription = await subscribeToCharacteristic(
+          SERVICE_UUID,
+          GRID_CHARACTERISTIC_UUID,
+          value => {
+            if (isMounted && !disablingRef.current) {
+              const active = parseInt(value, 10) !== 0;
+              gridRef.current = active;
+              setGrid(active);
+            }
+          },
+          'int32',
+        );
+        if (gridSubscription && isMounted && !disablingRef.current) {
+          subscriptionsRef.current.push(gridSubscription);
+        }
+
+        const batterySourceSubscription = await subscribeToCharacteristic(
+          SERVICE_UUID,
+          BATTERY_SOURCE_CHARACTERISTIC_UUID,
+          value => {
+            if (isMounted && !disablingRef.current) {
+              const active = parseInt(value, 10) !== 0;
+              batteryRef.current = active;
+              setBattery(active);
+            }
+          },
+          'int32',
+        );
+        if (batterySourceSubscription && isMounted && !disablingRef.current) {
+          subscriptionsRef.current.push(batterySourceSubscription);
         }
       } catch (error) {
         console.error('Failed to setup subscriptions:', error);
@@ -616,6 +695,9 @@ export function useBluetooth() {
     bluetoothEnabled, // Whether Bluetooth is enabled
     tempCharacteristicData, // Latest temperature from BLE
     vaccineCharacteristicData, // Latest vaccine count from BLE
+    solar, // Whether solar power source is active
+    grid, // Whether grid power source is active
+    battery, // Whether battery power source is active
 
     // Methods
     scan, // Start 10-second device scan

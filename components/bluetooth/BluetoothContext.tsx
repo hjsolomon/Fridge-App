@@ -47,6 +47,9 @@ interface BluetoothContextType {
   bluetoothEnabled: boolean;
   tempCharacteristicData: string | null;
   vaccineCharacteristicData: string | null;
+  solar: boolean;
+  grid: boolean;
+  battery: boolean;
   scan: () => void;
   disconnect: () => void;
   connect: (device: Device) => Promise<Device>;
@@ -71,9 +74,12 @@ export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children 
     bluetoothEnabled,
     tempCharacteristicData,
     vaccineCharacteristicData,
+    solar,
+    grid,
+    battery,
     scan,
     connect,
-      disconnect,
+    disconnect,
   } = useBluetooth();
 
   return (
@@ -86,6 +92,9 @@ export const BluetoothProvider: React.FC<{ children: ReactNode }> = ({ children 
         bluetoothEnabled,
         tempCharacteristicData,
         vaccineCharacteristicData,
+        solar,
+        grid,
+        battery,
         scan,
         connect,
         disconnect,
