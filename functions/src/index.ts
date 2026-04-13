@@ -92,3 +92,79 @@ export const checkTemperatureAlert = onSchedule('every 5 minutes', async () => {
   });
   await Promise.all(invalidTokenDeletions);
 });
+
+/**
+ * Runs every 5 minutes.
+ * Reads the current inventory count from Firestore and compares it against
+ * the minimum threshold stored in Settings. Sends an FCM push notification to
+ * all registered device tokens if inventory has dropped below the minimum.
+ */
+export const checkInventoryAlert = onSchedule('every 5 minutes', async () => {
+  // 1. Read inventory minimum threshold from settings
+  const settingsSnap = await db.doc(`Settings/${FRIDGE_ID}`).get();
+  const settings = settingsSnap.data();
+
+  if (!settings) {
+    console.log('No settings document found — skipping alert check.');
+    return;
+  }
+
+  const inventoryMin: number = settings.inventory_min ?? 0;
+
+  // 2. Read current inventory count
+  const inventorySnap = await db.doc(`Inventory/${FRIDGE_ID}`).get();
+
+  if (!inventorySnap.exists) {
+    console.log('No inventory document found — skipping alert check.');
+    return;
+  }
+
+  const currentCount: number = inventorySnap.data()?.current_count ?? 0;
+
+  console.log(`Inventory: ${currentCount} vials | Minimum: ${inventoryMin}`);
+
+  // 3. Only proceed if inventory is below the minimum
+  if (currentCount >= inventoryMin) {
+    console.log('Inventory above minimum — no alert needed.');
+    return;
+  }
+
+  // 4. Get all registered device tokens
+  const tokensSnap = await db.collection('DeviceTokens').get();
+  const tokens = tokensSnap.docs
+    .map(doc => doc.data().token as string)
+    .filter(Boolean);
+
+  if (tokens.length === 0) {
+    console.log('No registered device tokens — skipping notification.');
+    return;
+  }
+
+  // 5. Send to all registered devices
+  const title = 'Fridge Inventory Alert';
+  const body = `Inventory is low: ${currentCount} vials (minimum: ${inventoryMin})`;
+
+  const response = await admin.messaging().sendEachForMulticast({
+    tokens,
+    notification: { title, body },
+    android: {
+      priority: 'high',
+      notification: { channelId: 'inventory_alerts' },
+    },
+  });
+
+  console.log(
+    `Notifications sent: ${response.successCount} success, ${response.failureCount} failed.`
+  );
+
+  // 6. Clean up any tokens that are no longer valid
+  const invalidTokenDeletions: Promise<void>[] = [];
+  response.responses.forEach((res, idx) => {
+    if (!res.success && res.error?.code === 'messaging/registration-token-not-registered') {
+      invalidTokenDeletions.push(
+        db.collection('DeviceTokens').doc(tokens[idx]).delete().then(() => {})
+      );
+    }
+  });
+  await Promise.all(invalidTokenDeletions);
+});
