@@ -25,12 +25,13 @@ export const checkTemperatureAlert = onSchedule('every 5 minutes', async () => {
   const tempMin: number = settings.temp_min ?? 2;
   const tempMax: number = settings.temp_max ?? 8;
 
-  // 2. Read latest sensor reading
+  // 2. Read recent sensor readings (newest first) to find the current
+  //    temperature and determine when it first left the safe range
   const readingsSnap = await db
     .collection('SensorReadings')
     .where('fridge_id', '==', FRIDGE_ID)
     .orderBy('timestamp', 'desc')
-    .limit(1)
+    .limit(50)
     .get();
 
   if (readingsSnap.empty) {
@@ -38,8 +39,8 @@ export const checkTemperatureAlert = onSchedule('every 5 minutes', async () => {
     return;
   }
 
-  const latestReading = readingsSnap.docs[0].data();
-  const temp: number = latestReading.temperature;
+  const readings = readingsSnap.docs.map(d => d.data());
+  const temp: number = readings[0].temperature;
 
   console.log(`Temperature: ${temp}°C | Range: ${tempMin}–${tempMax}°C`);
 
@@ -47,6 +48,30 @@ export const checkTemperatureAlert = onSchedule('every 5 minutes', async () => {
   if (temp >= tempMin && temp <= tempMax) {
     console.log('Temperature within range — no alert needed.');
     return;
+  }
+
+  // Walk the readings oldest-to-newest to find the earliest reading in the
+  // current consecutive out-of-range run.  readings[0] is newest, so we
+  // iterate forward and keep updating outOfRangeSince until we hit a reading
+  // that was in range (which ends the current streak).
+  let outOfRangeSince: string | null = null;
+  for (const reading of readings) {
+    const t = reading.temperature as number;
+    if (t >= tempMin && t <= tempMax) {
+      // This reading is in range — the out-of-range run started after it
+      break;
+    }
+    // Still out of range: move the "since" marker further back in time
+    outOfRangeSince = reading.timestamp as string;
+  }
+
+  // Format the "since" time for the notification body (HH:MM UTC)
+  let sinceStr = '';
+  if (outOfRangeSince) {
+    const d = new Date(outOfRangeSince);
+    const hh = d.getUTCHours().toString().padStart(2, '0');
+    const mm = d.getUTCMinutes().toString().padStart(2, '0');
+    sinceStr = ` — out of range since ${hh}:${mm} UTC`;
   }
 
   // 4. Get all registered device tokens
@@ -64,8 +89,8 @@ export const checkTemperatureAlert = onSchedule('every 5 minutes', async () => {
   const isLow = temp < tempMin;
   const title = 'Fridge Temperature Alert';
   const body = isLow
-    ? `Temperature is too low: ${temp.toFixed(1)}°C (min: ${tempMin}°C)`
-    : `Temperature is too high: ${temp.toFixed(1)}°C (max: ${tempMax}°C)`;
+    ? `Temperature is too low: ${temp.toFixed(1)}°C (min: ${tempMin}°C)${sinceStr}`
+    : `Temperature is too high: ${temp.toFixed(1)}°C (max: ${tempMax}°C)${sinceStr}`;
 
   // 6. Send to all registered devices
   const response = await admin.messaging().sendEachForMulticast({

@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs grep:*)",
+      "Read(//c/Users/solom/**)",
+      "Read(//c/Users/solom/Downloads/**)"
+    ]
+  }
+}

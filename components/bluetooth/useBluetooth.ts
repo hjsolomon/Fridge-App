@@ -26,10 +26,7 @@ import { Buffer } from 'buffer';
 import firestore from '@react-native-firebase/firestore';
 import { logSensorReadingFirestore } from '@/db/firestoreSensorReading';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  logInventoryActionFirestore,
-  getCurrentInventoryFirestore,
-} from '@/db/firestoreInventory';
+import { logInventoryActionFirestore } from '@/db/firestoreInventory';
 
 /* -------------------------------------------------------------------------- */
 /*                                  State Management                            */
@@ -75,6 +72,11 @@ export function useBluetooth() {
   const disablingRef = useRef(false);
   const subscriptionsRef = useRef<Array<any>>([]);
   const connectionAliveRef = useRef(false);
+
+  // True while the Arduino is replaying buffered (ageMins > 0) readings on connect.
+  // The Firestore inventory write-back is suppressed during this window to avoid
+  // a BLE write colliding with the flush and dropping the connection.
+  const syncingBufferRef = useRef(false);
 
   // Helper: determine if discovered device is a fridge target
   const isFridgeDevice = (device?: Device | null): boolean => {
@@ -203,7 +205,7 @@ export function useBluetooth() {
       serviceUUID: string,
       characteristicUUID: string,
       onUpdate?: (value: string) => void,
-      dataType: 'int32' | 'float' | 'utf8' = 'int32',
+      dataType: 'int32' | 'float' | 'utf8' | 'temp8' = 'int32',
     ) => {
       if (!connectedDevice) {
         console.warn('No connected device');
@@ -244,7 +246,20 @@ export function useBluetooth() {
 
               // Decode based on specified data type
               let value: string | number;
-              if (dataType === 'float' && decodedValue.length === 4) {
+              if (dataType === 'temp8') {
+                if (decodedValue.length === 8) {
+                  // New firmware: float32 temperature + uint32 age in minutes
+                  const temp = Math.round(decodedValue.readFloatLE(0) * 10) / 10;
+                  const ageMins = decodedValue.readUInt32LE(4);
+                  value = `${temp}:${ageMins}`;
+                } else if (decodedValue.length === 4) {
+                  // Legacy firmware: plain float, treat as a live reading (age = 0)
+                  const temp = Math.round(decodedValue.readFloatLE(0) * 10) / 10;
+                  value = `${temp}:0`;
+                } else {
+                  value = decodedValue.toString('utf8');
+                }
+              } else if (dataType === 'float' && decodedValue.length === 4) {
                 // 4 bytes → IEEE 754 float, rounded to 1 decimal place
                 value = Math.round(decodedValue.readFloatLE(0) * 10) / 10;
               } else if (dataType === 'int32' && decodedValue.length === 4) {
@@ -315,22 +330,44 @@ export function useBluetooth() {
         const BATTERY_SOURCE_CHARACTERISTIC_UUID =
           '5c51b225-e17e-45fd-b4a9-84a635b71cad';
 
-        // Subscribe to temperature updates
+        // Subscribe to temperature updates.
+        // The characteristic sends 8 bytes decoded as "temp:ageMins" where
+        // ageMins is how many minutes ago the reading was taken (0 = live).
+        // The actual timestamp is computed from the age so that readings
+        // buffered on the Arduino while disconnected are stored with the
+        // correct time rather than the time the app received them.
         const tempSubscription = await subscribeToCharacteristic(
           SERVICE_UUID,
           TEMP_CHARACTERISTIC_UUID,
           async value => {
             if (isMounted && !disablingRef.current) {
-              setTempCharacteristicData(value);
-              // Log to Firestore
-              const tempValue = parseFloat(value);
+              // Parse "temp:ageMins" format
+              const colonIdx = value.indexOf(':');
+              const tempValue = parseFloat(
+                colonIdx >= 0 ? value.slice(0, colonIdx) : value,
+              );
+              const ageMins =
+                colonIdx >= 0 ? parseInt(value.slice(colonIdx + 1), 10) : 0;
+
+              // Track whether the Arduino is still replaying buffered readings.
+              // ageMins > 0 means a stored reading; 0 means the flush is done.
+              syncingBufferRef.current = ageMins > 0;
+
+              // Expose only the temperature value to UI consumers
+              setTempCharacteristicData(String(tempValue));
+
               if (!isNaN(tempValue)) {
+                // Back-calculate when the reading was actually taken
+                const timestamp = new Date(
+                  Date.now() - ageMins * 60 * 1000,
+                ).toISOString();
+
                 const log = {
                   reading_id: uuidv4(),
                   fridge_id: 'fridge_1',
                   temperature: tempValue,
                   battery_level: 50,
-                  timestamp: new Date().toISOString(),
+                  timestamp,
                   synced: 0,
                   solar: solarRef.current,
                   grid: gridRef.current,
@@ -347,7 +384,7 @@ export function useBluetooth() {
               }
             }
           },
-          'float',
+          'temp8',
         );
 
         if (tempSubscription && isMounted && !disablingRef.current) {
@@ -524,7 +561,8 @@ export function useBluetooth() {
           !snapshot.exists() ||
           !connectionAliveRef.current ||
           disablingRef.current ||
-          !bluetoothEnabled
+          !bluetoothEnabled ||
+          syncingBufferRef.current
         ) {
           return;
         }

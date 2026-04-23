@@ -105,7 +105,7 @@ const BluetoothScreen: React.FC = () => {
             mt="$4"
             px="$6"
             py="$3"
-            style={{ width: buttonWidth, minHeight: width * 0.12 }}
+            style={{ width: buttonWidth, minHeight: width * 0.14 }}
             onPress={shouldOpenSettings ? openSettings : requestPermissions}
           >
             <ButtonText size="xl" color="white">
