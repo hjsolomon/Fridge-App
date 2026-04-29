@@ -1,8 +1,4 @@
-<img width="150" height="338" alt="image" src="https://github.com/user-attachments/assets/8d6bb92d-e120-48b8-8182-ba40e25df49d" />
-<img width="150" height="338" alt="image" src="https://github.com/user-attachments/assets/1ca93979-8e55-47c3-921f-ee2bf0ee54df" />
-<img width="150" height="338" alt="image" src="https://github.com/user-attachments/assets/3c7aff3e-1bd0-41f8-8863-bb45879af84b" />
-<img width="150" height="338" alt="image" src="https://github.com/user-attachments/assets/9fd787ef-b970-439e-bd18-0d8708eb8b7c" />
-<img width="150" height="338" alt="image" src="https://github.com/user-attachments/assets/49a8c5ad-76f2-4b2b-b890-e5ed734fc5ad" />
+<img width="2170" height="926" alt="image" src="https://github.com/user-attachments/assets/cf4d1fbe-8c87-46cf-a9fc-e0224554d821" />
 
 
 # FridgeApp
